@@ -102,6 +102,14 @@ export interface Session {
   activeEnergyKcal?: number | null
   /** Provenance of the merged health data, e.g. "apple-health". */
   healthSource?: string
+  /**
+   * Set when the whole session was created by an import (not logged in-app),
+   * e.g. "apple-health" for a backfilled Apple Health workout. Such sessions
+   * carry date/duration/HR/calories but no set-level entries, and can be bulk
+   * removed. Distinct from `healthSource`, which only marks enrichment data on
+   * a normally-logged session.
+   */
+  importedFrom?: string
 }
 
 export interface BodyMetric {

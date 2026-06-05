@@ -68,3 +68,22 @@ export const SET_TYPE_SHORT: Record<SetType, string> = {
   drop: 'D',
   failure: 'F',
 }
+
+// Nicer names for a few Apple Health workout types; the rest fall back to a
+// CamelCase-to-sentence-case split.
+const ACTIVITY_LABEL_OVERRIDES: Record<string, string> = {
+  TraditionalStrengthTraining: 'Strength training',
+  FunctionalStrengthTraining: 'Functional strength',
+  HighIntensityIntervalTraining: 'HIIT',
+  CoreTraining: 'Core training',
+  SwimBikeRun: 'Triathlon',
+}
+
+/** Friendly, sentence-case label for an Apple Health workout activity type. */
+export function formatActivityType(raw: string): string {
+  if (!raw) return 'Workout'
+  if (ACTIVITY_LABEL_OVERRIDES[raw]) return ACTIVITY_LABEL_OVERRIDES[raw]
+  // "CardioDance" -> "Cardio dance", "JumpRope" -> "Jump rope".
+  const spaced = raw.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}

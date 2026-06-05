@@ -236,10 +236,17 @@ function overlapMs(aStart: number, aEnd: number, bStart: number, bEnd: number): 
 export function matchWorkoutsToSessions(
   workouts: HealthWorkout[],
   sessions: Pick<Session, 'id' | 'startedAt' | 'durationSeconds' | 'dateISO'>[],
-): { patches: Map<string, SessionHealthPatch>; matched: number; unmatched: number } {
+): {
+  patches: Map<string, SessionHealthPatch>
+  matched: number
+  unmatched: number
+  /** Workouts that overlapped no existing session (candidates to backfill). */
+  unmatchedWorkouts: HealthWorkout[]
+} {
   const patches = new Map<string, SessionHealthPatch>()
   const bestOverlap = new Map<string, number>()
   const usedWorkouts = new Set<HealthWorkout>()
+  const unmatchedWorkouts: HealthWorkout[] = []
 
   for (const w of workouts) {
     let bestSessionId: string | null = null
@@ -255,6 +262,8 @@ export function matchWorkoutsToSessions(
         bestSessionId = s.id
       }
     }
+    // No overlap with any session: nothing to enrich, so it can be backfilled.
+    if (best === 0) unmatchedWorkouts.push(w)
     if (bestSessionId && best > 0 && best > (bestOverlap.get(bestSessionId) ?? 0)) {
       bestOverlap.set(bestSessionId, best)
       patches.set(bestSessionId, {
@@ -271,5 +280,6 @@ export function matchWorkoutsToSessions(
     patches,
     matched: usedWorkouts.size,
     unmatched: workouts.length - usedWorkouts.size,
+    unmatchedWorkouts,
   }
 }

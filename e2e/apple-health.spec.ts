@@ -62,4 +62,29 @@ test.describe('Apple Health import (Option A)', () => {
     await expect(page.getByText('avg bpm')).toBeVisible()
     await expect(page.getByText('510')).toBeVisible()
   })
+
+  test('backfills a non-overlapping workout as a history session', async ({ page }) => {
+    // A past workout that overlaps no logged session; with backfill on (default)
+    // it becomes a standalone history entry carrying HR/calories but no lifts.
+    const xml = `<?xml version="1.0"?>
+      <HealthData>
+        <Workout workoutActivityType="HKWorkoutActivityTypeRunning" duration="30" durationUnit="min" startDate="2025-01-15 08:00:00 +0000" endDate="2025-01-15 08:30:00 +0000" sourceName="Apple Watch">
+          <WorkoutStatistics type="HKQuantityTypeIdentifierHeartRate" average="150" maximum="175" unit="count/min"/>
+          <WorkoutStatistics type="HKQuantityTypeIdentifierActiveEnergyBurned" sum="320" unit="kcal"/>
+        </Workout>
+      </HealthData>`
+
+    await gotoHome(page)
+    await page.getByRole('button', { name: 'Settings' }).click()
+    await page.locator(healthInput).setInputFiles({
+      name: 'export.xml',
+      mimeType: 'text/xml',
+      buffer: Buffer.from(xml),
+    })
+    await expect(page.getByText(/1 workouts added to history/)).toBeVisible()
+
+    await navTo(page, 'History')
+    await expect(page.getByRole('heading', { name: 'Running' })).toBeVisible()
+    await expect(page.getByText('150')).toBeVisible() // HR on the row
+  })
 })

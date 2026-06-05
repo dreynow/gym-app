@@ -97,9 +97,13 @@ describe('matchWorkoutsToSessions', () => {
     const sessions = [
       { id: 's1', startedAt: '2026-05-01T17:05:00.000Z', durationSeconds: 1800, dateISO: '2026-05-01T17:05:00.000Z' },
     ]
-    const { patches, matched, unmatched } = matchWorkoutsToSessions(workouts, sessions)
+    const { patches, matched, unmatched, unmatchedWorkouts } = matchWorkoutsToSessions(
+      workouts,
+      sessions,
+    )
     expect(matched).toBe(1)
     expect(unmatched).toBe(0)
+    expect(unmatchedWorkouts).toHaveLength(0) // overlapped, so not backfilled
     const patch = patches.get('s1')!
     expect(patch.heartRateAvgBpm).toBe(133)
     expect(patch.activeEnergyKcal).toBe(412)
@@ -110,10 +114,16 @@ describe('matchWorkoutsToSessions', () => {
     const sessions = [
       { id: 's2', startedAt: '2026-04-01T10:00:00.000Z', durationSeconds: 1800, dateISO: '2026-04-01T10:00:00.000Z' },
     ]
-    const { patches, matched, unmatched } = matchWorkoutsToSessions(workouts, sessions)
+    const { patches, matched, unmatched, unmatchedWorkouts } = matchWorkoutsToSessions(
+      workouts,
+      sessions,
+    )
     expect(patches.size).toBe(0)
     expect(matched).toBe(0)
     expect(unmatched).toBe(1)
+    // No overlap, so the workout is a backfill candidate.
+    expect(unmatchedWorkouts).toHaveLength(1)
+    expect(unmatchedWorkouts[0].activityType).toBe('TraditionalStrengthTraining')
   })
 })
 

@@ -7,7 +7,13 @@ import { countWorkingSets, sessionVolume } from '../lib/calc'
 import { displayWeight, formatDurationShort, relativeDate, unitLabel } from '../lib/format'
 import { Header } from '../components/Header'
 import { Card, EmptyState, Pill, Spinner } from '../components/ui'
-import { IconChevronRight, IconHistory, IconTrophy } from '../components/Icons'
+import {
+  IconChevronRight,
+  IconFlame,
+  IconHeart,
+  IconHistory,
+  IconTrophy,
+} from '../components/Icons'
 
 export function HistoryScreen() {
   const settings = useSettings()
@@ -69,12 +75,30 @@ export function HistoryScreen() {
                     <p className="text-sm text-fg-2 mt-2 line-clamp-1">
                       {names.join(', ') || 'No exercises'}
                     </p>
-                    <div className="flex gap-4 mt-2 text-xs text-fg-3">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-fg-3">
                       <span>{formatDurationShort(s.durationSeconds)}</span>
-                      <span>{sets} sets</span>
-                      <span>
-                        {displayWeight(volume, settings.units)} {unitLabel(settings.units)} volume
-                      </span>
+                      {volume > 0 ? (
+                        <>
+                          <span>{sets} sets</span>
+                          <span>
+                            {displayWeight(volume, settings.units)} {unitLabel(settings.units)} volume
+                          </span>
+                        </>
+                      ) : (
+                        sets > 0 && <span>{sets} sets</span>
+                      )}
+                      {s.heartRateAvgBpm != null && (
+                        <span className="inline-flex items-center gap-1">
+                          <IconHeart size={12} className="text-danger" />
+                          <span className="tabular-nums">{s.heartRateAvgBpm}</span> bpm
+                        </span>
+                      )}
+                      {s.activeEnergyKcal != null && (
+                        <span className="inline-flex items-center gap-1">
+                          <IconFlame size={12} className="text-warning" />
+                          <span className="tabular-nums">{s.activeEnergyKcal}</span> kcal
+                        </span>
+                      )}
                     </div>
                   </button>
                 </Card>

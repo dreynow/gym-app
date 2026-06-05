@@ -15,8 +15,10 @@ import {
   parseAppleHealthExport,
   parseAppleHealthStream,
   type AppleHealthData,
+  type HealthWorkout,
 } from '../lib/appleHealth'
 import { toDateInputValue } from '../lib/format'
+import { formatActivityType } from '../lib/labels'
 
 const SEEDED_FLAG = 'ironlog.seeded.v1'
 
@@ -203,17 +205,52 @@ export interface HealthImportResult {
   workoutsTotal: number
   workoutsMatched: number
   workoutsUnmatched: number
+  /** Workouts added to history as standalone sessions (backfill). */
+  sessionsCreated: number
   bodyAdded: number
   bodySkipped: number
 }
 
+export interface HealthImportOptions {
+  /**
+   * Backfill: create a standalone history session for each workout that does
+   * not overlap an existing one (date/duration/HR/calories, no set entries).
+   */
+  createSessions?: boolean
+}
+
+const APPLE_HEALTH_SOURCE = 'apple-health'
+
+/** Build a finished, set-less session from an Apple Health workout. */
+function appleHealthWorkoutToSession(w: HealthWorkout): Session {
+  return {
+    id: uid('ses'),
+    dateISO: w.startISO,
+    startedAt: w.startISO,
+    routineId: null,
+    routineName: formatActivityType(w.activityType),
+    durationSeconds: w.durationSec,
+    entries: [],
+    finished: true,
+    heartRateAvgBpm: w.hrAvgBpm,
+    heartRateMaxBpm: w.hrMaxBpm,
+    activeEnergyKcal: w.energyKcal,
+    healthSource: APPLE_HEALTH_SOURCE,
+    importedFrom: APPLE_HEALTH_SOURCE,
+  }
+}
+
 /**
  * Parse an Apple Health `export.xml` and merge it in: attach per-workout heart
- * rate + active energy onto the sessions they overlap, and add any bodyweight
- * records to the Body log (skipping dates already recorded). Non-destructive.
+ * rate + active energy onto the sessions they overlap, add any bodyweight
+ * records to the Body log (skipping dates already recorded), and optionally
+ * backfill non-overlapping workouts as history sessions. Non-destructive.
  */
-export async function importAppleHealth(xml: string): Promise<HealthImportResult> {
-  return mergeHealthData(parseAppleHealthExport(xml))
+export async function importAppleHealth(
+  xml: string,
+  opts: HealthImportOptions = {},
+): Promise<HealthImportResult> {
+  return mergeHealthData(parseAppleHealthExport(xml), opts)
 }
 
 /**
@@ -222,15 +259,39 @@ export async function importAppleHealth(xml: string): Promise<HealthImportResult
  */
 export async function importAppleHealthStream(
   stream: ReadableStream<Uint8Array>,
+  opts: HealthImportOptions = {},
 ): Promise<HealthImportResult> {
-  return mergeHealthData(await parseAppleHealthStream(stream))
+  return mergeHealthData(await parseAppleHealthStream(stream), opts)
 }
 
-async function mergeHealthData(data: AppleHealthData): Promise<HealthImportResult> {
+/** Remove every session that was backfilled from Apple Health. Returns count. */
+export async function removeImportedAppleHealthSessions(): Promise<number> {
+  const all = await db.sessions.toArray()
+  const ids = all.filter((s) => s.importedFrom === APPLE_HEALTH_SOURCE).map((s) => s.id)
+  await Promise.all(ids.map((id) => deleteSession(id)))
+  return ids.length
+}
+
+async function mergeHealthData(
+  data: AppleHealthData,
+  opts: HealthImportOptions = {},
+): Promise<HealthImportResult> {
   const sessions = (await db.sessions.toArray()).filter((s) => s.finished)
-  const { patches, matched, unmatched } = matchWorkoutsToSessions(data.workouts, sessions)
+  const { patches, matched, unmatched, unmatchedWorkouts } = matchWorkoutsToSessions(
+    data.workouts,
+    sessions,
+  )
   for (const [id, patch] of patches) {
     await db.sessions.update(id, patch as Partial<Session>)
+  }
+
+  // Backfill: turn workouts that overlap nothing into standalone sessions. This
+  // is idempotent: on a re-import those sessions now exist and overlap the same
+  // workouts, so they are enriched rather than duplicated.
+  let sessionsCreated = 0
+  if (opts.createSessions && unmatchedWorkouts.length > 0) {
+    await db.sessions.bulkAdd(unmatchedWorkouts.map(appleHealthWorkoutToSession))
+    sessionsCreated = unmatchedWorkouts.length
   }
 
   // One bodyweight entry per day; skip days that already have a record.
@@ -253,6 +314,7 @@ async function mergeHealthData(data: AppleHealthData): Promise<HealthImportResul
     workoutsTotal: data.workouts.length,
     workoutsMatched: matched,
     workoutsUnmatched: unmatched,
+    sessionsCreated,
     bodyAdded,
     bodySkipped,
   }

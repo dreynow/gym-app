@@ -1,5 +1,10 @@
 import { useRef, useState } from 'react'
-import { importAppleHealthStream, updateSettings, type HealthImportResult } from '../db/repo'
+import {
+  importAppleHealthStream,
+  removeImportedAppleHealthSessions,
+  updateSettings,
+  type HealthImportResult,
+} from '../db/repo'
 import type { Units } from '../db/types'
 import { useSettings } from '../hooks/useSettings'
 import {
@@ -13,13 +18,22 @@ import { Header } from '../components/Header'
 import {
   Button,
   Card,
+  cx,
   Field,
   SegmentedControl,
   Sheet,
   Stepper,
   TextInput,
 } from '../components/ui'
-import { IconDownload, IconHeart, IconPlus, IconUpload, IconX } from '../components/Icons'
+import {
+  IconCheck,
+  IconDownload,
+  IconHeart,
+  IconPlus,
+  IconTrash,
+  IconUpload,
+  IconX,
+} from '../components/Icons'
 
 export function SettingsScreen() {
   const settings = useSettings()
@@ -32,6 +46,8 @@ export function SettingsScreen() {
   const [healthBusy, setHealthBusy] = useState(false)
   const [healthResult, setHealthResult] = useState<HealthImportResult | null>(null)
   const [healthError, setHealthError] = useState<string | null>(null)
+  const [backfillWorkouts, setBackfillWorkouts] = useState(true)
+  const [removedMsg, setRemovedMsg] = useState<string | null>(null)
 
   function addPlate() {
     const v = Number(newPlate)
@@ -82,17 +98,28 @@ export function SettingsScreen() {
     if (!file) return
     setHealthError(null)
     setHealthResult(null)
+    setRemovedMsg(null)
     setHealthBusy(true)
     try {
       // Stream the file rather than reading it whole: a real export.xml can be
       // hundreds of MB, well past V8's max string length.
-      const res = await importAppleHealthStream(file.stream())
+      const res = await importAppleHealthStream(file.stream(), {
+        createSessions: backfillWorkouts,
+      })
       setHealthResult(res)
     } catch {
       setHealthError('Could not read that file. Pick the export.xml from your Apple Health export.')
     } finally {
       setHealthBusy(false)
     }
+  }
+
+  async function removeImportedWorkouts() {
+    if (!confirm('Remove all workouts that were imported from Apple Health? Workouts you logged in Rack are kept.')) return
+    setRemovedMsg(null)
+    const n = await removeImportedAppleHealthSessions()
+    setHealthResult(null)
+    setRemovedMsg(`Removed ${n} imported ${n === 1 ? 'workout' : 'workouts'}.`)
   }
 
   return (
@@ -203,6 +230,30 @@ export function SettingsScreen() {
             calories attach to the workouts they overlap, and bodyweight entries
             are added to your Body log.
           </p>
+
+          <button
+            type="button"
+            onClick={() => setBackfillWorkouts((v) => !v)}
+            className="w-full flex items-start gap-3 text-left bg-surface-2 rounded-md p-3 active:bg-surface-3"
+          >
+            <span
+              className={cx(
+                'mt-0.5 size-5 shrink-0 rounded-[6px] border flex items-center justify-center',
+                backfillWorkouts ? 'bg-volt border-volt text-on-volt' : 'border-line-2 text-transparent',
+              )}
+            >
+              <IconCheck size={14} />
+            </span>
+            <span className="text-sm">
+              <span className="text-fg-1 font-medium">Add workouts to history</span>
+              <span className="block text-xs text-fg-3">
+                Backfills past workouts as sessions (date, duration, heart rate,
+                calories) so your calendar and streaks fill in. Apple Health has
+                no set data, so these carry no lifts.
+              </span>
+            </span>
+          </button>
+
           <Button
             variant="secondary"
             full
@@ -219,6 +270,7 @@ export function SettingsScreen() {
             onChange={onHealthFileChosen}
           />
           {healthError && <p className="text-sm text-danger">{healthError}</p>}
+          {removedMsg && <p className="text-sm text-fg-2">{removedMsg}</p>}
           {healthResult && (
             <div className="text-sm text-fg-2 bg-surface-2 rounded-md p-3">
               <p className="text-fg-1 font-medium mb-1">Apple Health imported</p>
@@ -229,6 +281,9 @@ export function SettingsScreen() {
                   {healthResult.workoutsUnmatched > 0 &&
                     ` (${healthResult.workoutsUnmatched} had no matching session)`}
                 </li>
+                {healthResult.sessionsCreated > 0 && (
+                  <li>{healthResult.sessionsCreated} workouts added to history</li>
+                )}
                 <li>
                   {healthResult.bodyAdded} bodyweight entries added
                   {healthResult.bodySkipped > 0 && `, ${healthResult.bodySkipped} already on file`}
@@ -236,6 +291,13 @@ export function SettingsScreen() {
               </ul>
             </div>
           )}
+          <button
+            type="button"
+            onClick={removeImportedWorkouts}
+            className="inline-flex items-center gap-1.5 text-xs text-fg-3 active:text-fg-2"
+          >
+            <IconTrash size={14} /> Remove imported workouts
+          </button>
         </Section>
 
         <Section title="About">
