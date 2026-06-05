@@ -12,6 +12,7 @@ import type {
   Settings,
 } from './types'
 import { uid } from '../lib/id'
+import { pushCloudBackup } from '../lib/cloudBackup'
 import {
   matchWorkoutsToSessions,
   parseAppleHealthExport,
@@ -59,6 +60,26 @@ export async function getSettings(): Promise<Settings> {
 export async function updateSettings(patch: Partial<Omit<Settings, 'id'>>): Promise<void> {
   const current = await getSettings()
   await db.settings.put({ ...current, ...patch, id: SETTINGS_ID })
+}
+
+/**
+ * Push a cloud backup if one is configured. Silent and non-blocking. Pass a
+ * minimum interval (ms) to skip when the last backup is more recent than that
+ * (0 = always). Called after finishing a workout and ~daily on app load.
+ */
+export async function runAutoBackup(minIntervalMs = 0): Promise<void> {
+  try {
+    const s = await getSettings()
+    if (!s.syncEndpoint || !s.syncPassphrase) return
+    if (minIntervalMs > 0) {
+      const last = s.lastCloudBackupAt ? new Date(s.lastCloudBackupAt).getTime() : 0
+      if (Date.now() - last < minIntervalMs) return
+    }
+    await pushCloudBackup({ endpoint: s.syncEndpoint, passphrase: s.syncPassphrase })
+    await updateSettings({ lastCloudBackupAt: new Date().toISOString() })
+  } catch {
+    /* silent: manual backup in Settings surfaces errors */
+  }
 }
 
 // ---------- Exercises ----------

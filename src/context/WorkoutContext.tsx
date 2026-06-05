@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { db } from '../db/db'
 import {
+  runAutoBackup,
   saveSession,
   startSession as buildSession,
 } from '../db/repo'
@@ -140,6 +141,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     const prs = await recordSessionPRs(finished)
     setSession(null)
     setRest({ endsAt: null, totalSeconds: 0, exerciseId: null })
+    // Back up the new session immediately if cloud backup is configured.
+    void runAutoBackup()
     return { sessionId: finished.id, prCount: prs.length }
   }, [session, elapsedSeconds])
 
