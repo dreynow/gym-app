@@ -35,7 +35,7 @@ test.describe('Progress charts', () => {
 
     await navTo(page, 'Progress')
     // Defaults to the first exercise with history (Leg Press) and draws a chart.
-    await expect(page.getByText('Leg Press')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Leg Press' })).toBeVisible()
     await expect(page.locator('.recharts-surface').first()).toBeVisible()
     await expect(page.getByText('Latest')).toBeVisible()
 
