@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { addCoachMessage, clearCoachMessages } from '../db/repo'
+import { addCoachMessage, clearCoachMessages, newMeal, saveMeal } from '../db/repo'
 import { useSettings } from '../hooks/useSettings'
 import { navigate } from '../lib/router'
+import { dayKey } from '../lib/streaks'
 import {
   assembleCoachContext,
   DEFAULT_COACH_MODEL,
   streamCoachReply,
   toApiMessages,
+  type ApiMessage,
+  type ToolUse,
 } from '../lib/coach'
 import { Header } from '../components/Header'
 import { Button, cx, EmptyState, IconButton } from '../components/ui'
@@ -36,6 +39,26 @@ export function CoachScreen() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streaming])
 
+  async function runTool(tu: ToolUse): Promise<string> {
+    if (tu.name === 'log_meal') {
+      const name = String(tu.input.name ?? 'Meal').trim() || 'Meal'
+      const calories = Math.max(0, Math.round(Number(tu.input.calories) || 0))
+      const proteinG = Math.max(0, Math.round(Number(tu.input.proteinG) || 0))
+      const today = dayKey(new Date())
+      const day = typeof tu.input.day === 'string' && tu.input.day ? tu.input.day : today
+      const when = day === today ? 'today' : day
+      const ok = await confirm({
+        title: 'Log this meal?',
+        message: `${name}\n${calories} kcal · ${proteinG}g protein · ${when}`,
+        confirmLabel: 'Log meal',
+      })
+      if (!ok) return 'The user declined to log this meal.'
+      await saveMeal(newMeal({ day, name, calories, proteinG }))
+      return `Logged "${name}": ${calories} kcal, ${proteinG}g protein for ${when}.`
+    }
+    return `Unknown tool: ${tu.name}`
+  }
+
   async function send(text: string) {
     const content = text.trim()
     if (!content || busy || !settings.anthropicApiKey) return
@@ -47,18 +70,39 @@ export function CoachScreen() {
     try {
       const context = await assembleCoachContext()
       const history = await db.coachMessages.orderBy('createdAt').toArray()
-      let acc = ''
-      await streamCoachReply({
-        apiKey: settings.anthropicApiKey,
-        model: settings.coachModel || DEFAULT_COACH_MODEL,
-        context,
-        messages: toApiMessages(history),
-        onText: (d) => {
-          acc += d
-          setStreaming(acc)
-        },
-      })
-      if (acc) await addCoachMessage('assistant', acc)
+      const apiMessages: ApiMessage[] = toApiMessages(history)
+      let display = ''
+      // Agentic loop: stream a turn, run any tools (with confirmation), repeat
+      // until the model is done. Capped so a misbehaving model can't loop.
+      for (let i = 0; i < 4; i++) {
+        const turn = await streamCoachReply({
+          apiKey: settings.anthropicApiKey,
+          model: settings.coachModel || DEFAULT_COACH_MODEL,
+          context,
+          messages: apiMessages,
+          onText: (d) => {
+            display += d
+            setStreaming(display)
+          },
+        })
+        if (turn.toolUses.length === 0) break
+
+        const assistantContent: unknown[] = []
+        if (turn.text) assistantContent.push({ type: 'text', text: turn.text })
+        for (const tu of turn.toolUses) {
+          assistantContent.push({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input })
+        }
+        apiMessages.push({ role: 'assistant', content: assistantContent })
+
+        const results: unknown[] = []
+        for (const tu of turn.toolUses) {
+          const out = await runTool(tu)
+          results.push({ type: 'tool_result', tool_use_id: tu.id, content: out })
+        }
+        apiMessages.push({ role: 'user', content: results })
+        if (display) display += '\n\n'
+      }
+      if (display.trim()) await addCoachMessage('assistant', display.trim())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong talking to the coach.')
     } finally {
