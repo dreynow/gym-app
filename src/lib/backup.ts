@@ -85,7 +85,7 @@ export async function importBackup(json: string, mode: ImportMode): Promise<Impo
     throw new Error('That file is not valid JSON.')
   }
   if (!isBackup(parsed)) {
-    throw new Error('That file is not an Ironlog backup.')
+    throw new Error('That file is not a Rack backup.')
   }
   const { data } = parsed
 

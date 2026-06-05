@@ -175,7 +175,7 @@ export function SettingsScreen() {
 
         <Section title="About">
           <p className="text-sm text-fg-2">
-            Ironlog is a local-first, offline workout tracker. No account, no
+            Rack is a local-first, offline workout tracker. No account, no
             cloud, no tracking. Version 1.0.
           </p>
         </Section>

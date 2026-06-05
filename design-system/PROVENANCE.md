@@ -9,6 +9,5 @@ To update the design later: replace `src/theme.css` with the new
 `handoff/theme.css` from the design-system project, drop any new fonts into
 `public/fonts/`, and copy the new docs here.
 
-Pending: `Geist-Regular.woff2` (400) and `Geist-SemiBold.woff2` (600) were not
-in the initial handoff drop; until they land in `public/fonts/`, those two Geist
-Sans weights fall back to the system sans (no code change needed when added).
+All seven Geist weights are present in `public/fonts/`: Geist Sans 400/500/600/700
+and Geist Mono 400/500/600.
