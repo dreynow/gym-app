@@ -30,6 +30,11 @@ node_modules/.tmp
 *.tsbuildinfo
 dev-dist
 
+# local Apple Health exports (large; never commit)
+/apple_export
+export.xml
+export_cda.xml
+
 # playwright e2e
 /test-results
 /playwright-report

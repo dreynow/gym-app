@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { importAppleHealth, updateSettings, type HealthImportResult } from '../db/repo'
+import { importAppleHealthStream, updateSettings, type HealthImportResult } from '../db/repo'
 import type { Units } from '../db/types'
 import { useSettings } from '../hooks/useSettings'
 import {
@@ -76,29 +76,23 @@ export function SettingsScreen() {
     }
   }
 
-  function onHealthFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onHealthFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
     setHealthError(null)
     setHealthResult(null)
     setHealthBusy(true)
-    const reader = new FileReader()
-    reader.onload = async () => {
-      try {
-        const res = await importAppleHealth(String(reader.result))
-        setHealthResult(res)
-      } catch {
-        setHealthError('Could not read that file. Pick the export.xml from your Apple Health export.')
-      } finally {
-        setHealthBusy(false)
-      }
-    }
-    reader.onerror = () => {
-      setHealthError('Could not read that file.')
+    try {
+      // Stream the file rather than reading it whole: a real export.xml can be
+      // hundreds of MB, well past V8's max string length.
+      const res = await importAppleHealthStream(file.stream())
+      setHealthResult(res)
+    } catch {
+      setHealthError('Could not read that file. Pick the export.xml from your Apple Health export.')
+    } finally {
       setHealthBusy(false)
     }
-    reader.readAsText(file)
-    e.target.value = ''
   }
 
   return (

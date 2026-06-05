@@ -7,6 +7,12 @@ import { lbToKg } from './calc'
  * DOM-based: the file can be hundreds of MB (millions of raw samples), so we
  * scan only the handful of element types we care about and never build a DOM.
  *
+ * Real exports routinely exceed V8's max string length (~512MB), so the file
+ * must never be read into a single string. `parseAppleHealthStream` consumes a
+ * ReadableStream and processes complete elements as they arrive, keeping only a
+ * small carry-over buffer. `parseAppleHealthExport` keeps the whole-string API
+ * for tests and small inputs and shares the same element parsing.
+ *
  * For heart rate and energy we read each workout's pre-aggregated
  * `<WorkoutStatistics>` (avg/max/sum) instead of the raw sample stream, which
  * keeps this fast and light even on a phone.
@@ -66,78 +72,148 @@ const HR_TYPE = 'HKQuantityTypeIdentifierHeartRate'
 const ENERGY_TYPE = 'HKQuantityTypeIdentifierActiveEnergyBurned'
 const BODY_MASS_TYPE = 'HKQuantityTypeIdentifierBodyMass'
 
+/** Parse one `<Workout ...>...</Workout>` block. */
+function parseWorkoutBlock(block: string): HealthWorkout | null {
+  const gt = block.indexOf('>')
+  if (gt === -1) return null
+  const open = block.slice(0, gt) // "<Workout ...attrs..."
+  const body = block.slice(gt + 1) // children (plus a trailing "</Workout>")
+
+  const startISO = parseAppleDate(attr(open, 'startDate'))
+  const endISO = parseAppleDate(attr(open, 'endDate'))
+  if (!startISO || !endISO) return null
+
+  let hrAvgBpm: number | null = null
+  let hrMaxBpm: number | null = null
+  let energyKcal: number | null = null
+
+  const statRe = /<WorkoutStatistics\b([^>]*)\/?>/g
+  for (let s = statRe.exec(body); s; s = statRe.exec(body)) {
+    const stat = s[1]
+    const type = attr(stat, 'type')
+    if (type === HR_TYPE) {
+      hrAvgBpm = numAttr(stat, 'average')
+      hrMaxBpm = numAttr(stat, 'maximum')
+    } else if (type === ENERGY_TYPE) {
+      energyKcal = numAttr(stat, 'sum')
+    }
+  }
+
+  // Older exports put total energy on the Workout element itself.
+  if (energyKcal == null) {
+    const total = numAttr(open, 'totalEnergyBurned')
+    if (total != null) energyKcal = total
+  }
+
+  const startMs = new Date(startISO).getTime()
+  const endMs = new Date(endISO).getTime()
+  let durationSec = Math.round((endMs - startMs) / 1000)
+  const durAttr = numAttr(open, 'duration')
+  if ((!durationSec || durationSec < 0) && durAttr != null) {
+    const unit = attr(open, 'durationUnit')
+    durationSec = Math.round(durAttr * (unit === 'min' ? 60 : unit === 'h' ? 3600 : 1))
+  }
+
+  return {
+    startISO,
+    endISO,
+    startMs,
+    endMs,
+    durationSec,
+    hrAvgBpm: hrAvgBpm != null ? Math.round(hrAvgBpm) : null,
+    hrMaxBpm: hrMaxBpm != null ? Math.round(hrMaxBpm) : null,
+    energyKcal: energyKcal != null ? Math.round(energyKcal) : null,
+    activityType: (attr(open, 'workoutActivityType') ?? '').replace('HKWorkoutActivityType', ''),
+  }
+}
+
+/** Parse a `<Record ...>` opening tag, returning a body-mass reading or null. */
+function parseBodyMassOpenTag(tag: string): HealthBodyMass | null {
+  // Exact type match: a substring check would also catch BodyMassIndex (BMI),
+  // importing e.g. a BMI of 24.2 as a 24.2kg bodyweight.
+  if (attr(tag, 'type') !== BODY_MASS_TYPE) return null
+  const dateISO = parseAppleDate(attr(tag, 'startDate'))
+  const value = numAttr(tag, 'value')
+  if (!dateISO || value == null) return null
+  const unit = (attr(tag, 'unit') ?? 'kg').toLowerCase()
+  const weightKg = unit.startsWith('lb') ? lbToKg(value) : value
+  return { dateISO, weightKg: Math.round(weightKg * 10) / 10 }
+}
+
+const WORKOUT_OPEN = '<Workout ' // trailing space excludes <WorkoutEvent>/<WorkoutStatistics>
+const WORKOUT_CLOSE = '</Workout>'
+const RECORD_OPEN = '<Record '
+/** Longest opening token, used to size the cross-chunk carry-over. */
+const MAX_TOKEN = WORKOUT_OPEN.length
+
+interface Sink {
+  workouts: HealthWorkout[]
+  bodyMass: HealthBodyMass[]
+}
+
+/**
+ * Pull every *complete* `<Workout>...</Workout>` and `<Record .../>` out of the
+ * buffer into the sink, and return the unconsumed remainder (a partial element
+ * at the tail, or a few chars in case an opening token was split mid-chunk).
+ * Non-element text is dropped so memory stays bounded while streaming.
+ */
+function drainBuffer(buf: string, sink: Sink): string {
+  let i = 0
+  for (;;) {
+    const wi = buf.indexOf(WORKOUT_OPEN, i)
+    const ri = buf.indexOf(RECORD_OPEN, i)
+    if (wi === -1 && ri === -1) {
+      // No more elements; keep a short tail in case a token spans the boundary.
+      return buf.slice(Math.max(i, buf.length - MAX_TOKEN))
+    }
+    const takeWorkout = ri === -1 || (wi !== -1 && wi < ri)
+    if (takeWorkout) {
+      const end = buf.indexOf(WORKOUT_CLOSE, wi)
+      if (end === -1) return buf.slice(wi) // workout not closed yet
+      const w = parseWorkoutBlock(buf.slice(wi, end + WORKOUT_CLOSE.length))
+      if (w) sink.workouts.push(w)
+      i = end + WORKOUT_CLOSE.length
+    } else {
+      const gt = buf.indexOf('>', ri)
+      if (gt === -1) return buf.slice(ri) // record tag not closed yet
+      const b = parseBodyMassOpenTag(buf.slice(ri, gt + 1))
+      if (b) sink.bodyMass.push(b)
+      i = gt + 1
+    }
+  }
+}
+
 export function parseAppleHealthExport(xml: string): AppleHealthData {
-  const workouts: HealthWorkout[] = []
+  const sink: Sink = { workouts: [], bodyMass: [] }
+  drainBuffer(xml, sink)
+  return sink
+}
 
-  // Each <Workout ...> ... </Workout> (workouts always carry child elements).
-  const workoutRe = /<Workout\b([^>]*)>([\s\S]*?)<\/Workout>/g
-  for (let m = workoutRe.exec(xml); m; m = workoutRe.exec(xml)) {
-    const open = m[1]
-    const body = m[2]
-    const startISO = parseAppleDate(attr(open, 'startDate'))
-    const endISO = parseAppleDate(attr(open, 'endDate'))
-    if (!startISO || !endISO) continue
-
-    let hrAvgBpm: number | null = null
-    let hrMaxBpm: number | null = null
-    let energyKcal: number | null = null
-
-    const statRe = /<WorkoutStatistics\b([^>]*)\/?>/g
-    for (let s = statRe.exec(body); s; s = statRe.exec(body)) {
-      const stat = s[1]
-      const type = attr(stat, 'type')
-      if (type === HR_TYPE) {
-        hrAvgBpm = numAttr(stat, 'average')
-        hrMaxBpm = numAttr(stat, 'maximum')
-      } else if (type === ENERGY_TYPE) {
-        energyKcal = numAttr(stat, 'sum')
-      }
+/**
+ * Stream a (possibly multi-hundred-MB) export through the same element parser
+ * without ever materialising it as one string. Safe for files far larger than
+ * V8's max string length.
+ */
+export async function parseAppleHealthStream(
+  stream: ReadableStream<Uint8Array>,
+): Promise<AppleHealthData> {
+  const sink: Sink = { workouts: [], bodyMass: [] }
+  const reader = stream.getReader()
+  const decoder = new TextDecoder('utf-8')
+  let buf = ''
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      buf = drainBuffer(buf, sink)
     }
-
-    // Older exports put total energy on the Workout element itself.
-    if (energyKcal == null) {
-      const total = numAttr(open, 'totalEnergyBurned')
-      if (total != null) energyKcal = total
-    }
-
-    const startMs = new Date(startISO).getTime()
-    const endMs = new Date(endISO).getTime()
-    let durationSec = Math.round((endMs - startMs) / 1000)
-    const durAttr = numAttr(open, 'duration')
-    if ((!durationSec || durationSec < 0) && durAttr != null) {
-      const unit = attr(open, 'durationUnit')
-      durationSec = Math.round(durAttr * (unit === 'min' ? 60 : unit === 'h' ? 3600 : 1))
-    }
-
-    workouts.push({
-      startISO,
-      endISO,
-      startMs,
-      endMs,
-      durationSec,
-      hrAvgBpm: hrAvgBpm != null ? Math.round(hrAvgBpm) : null,
-      hrMaxBpm: hrMaxBpm != null ? Math.round(hrMaxBpm) : null,
-      energyKcal: energyKcal != null ? Math.round(energyKcal) : null,
-      activityType: (attr(open, 'workoutActivityType') ?? '').replace('HKWorkoutActivityType', ''),
-    })
+    buf += decoder.decode()
+    drainBuffer(buf, sink)
+  } finally {
+    reader.releaseLock()
   }
-
-  // Body mass records (self-closing or with children — attributes are in the
-  // opening tag either way).
-  const bodyMass: HealthBodyMass[] = []
-  const recordRe = /<Record\b([^>]*)>/g
-  for (let m = recordRe.exec(xml); m; m = recordRe.exec(xml)) {
-    const tag = m[1]
-    if (!tag.includes(BODY_MASS_TYPE)) continue
-    const dateISO = parseAppleDate(attr(tag, 'startDate'))
-    const value = numAttr(tag, 'value')
-    if (!dateISO || value == null) continue
-    const unit = (attr(tag, 'unit') ?? 'kg').toLowerCase()
-    const weightKg = unit.startsWith('lb') ? lbToKg(value) : value
-    bodyMass.push({ dateISO, weightKg: Math.round(weightKg * 10) / 10 })
-  }
-
-  return { workouts, bodyMass }
+  return sink
 }
 
 export interface SessionHealthPatch {

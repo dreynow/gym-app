@@ -10,7 +10,12 @@ import type {
   Settings,
 } from './types'
 import { uid } from '../lib/id'
-import { matchWorkoutsToSessions, parseAppleHealthExport } from '../lib/appleHealth'
+import {
+  matchWorkoutsToSessions,
+  parseAppleHealthExport,
+  parseAppleHealthStream,
+  type AppleHealthData,
+} from '../lib/appleHealth'
 import { toDateInputValue } from '../lib/format'
 
 const SEEDED_FLAG = 'ironlog.seeded.v1'
@@ -208,8 +213,20 @@ export interface HealthImportResult {
  * records to the Body log (skipping dates already recorded). Non-destructive.
  */
 export async function importAppleHealth(xml: string): Promise<HealthImportResult> {
-  const data = parseAppleHealthExport(xml)
+  return mergeHealthData(parseAppleHealthExport(xml))
+}
 
+/**
+ * Streaming variant: takes the file's ReadableStream so a real, multi-hundred-MB
+ * `export.xml` never has to fit in a single string (V8 caps strings at ~512MB).
+ */
+export async function importAppleHealthStream(
+  stream: ReadableStream<Uint8Array>,
+): Promise<HealthImportResult> {
+  return mergeHealthData(await parseAppleHealthStream(stream))
+}
+
+async function mergeHealthData(data: AppleHealthData): Promise<HealthImportResult> {
   const sessions = (await db.sessions.toArray()).filter((s) => s.finished)
   const { patches, matched, unmatched } = matchWorkoutsToSessions(data.workouts, sessions)
   for (const [id, patch] of patches) {
