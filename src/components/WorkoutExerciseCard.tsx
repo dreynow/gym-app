@@ -8,6 +8,7 @@ import { useSettings } from '../hooks/useSettings'
 import { epley1RM, isLogged } from '../lib/calc'
 import { displayWeight, formatDuration, num, relativeDate, unitLabel } from '../lib/format'
 import { kgToLb, lbToKg } from '../lib/calc'
+import { suggestProgression } from '../lib/progression'
 import { SET_TYPE_LABEL, SET_TYPES, SET_TYPE_SHORT } from '../lib/labels'
 import { Button, Card, cx, IconButton, Pill, Sheet, Stepper } from './ui'
 import { useConfirm } from './ConfirmDialog'
@@ -27,6 +28,8 @@ interface Props {
   entry: SessionEntry
   exercise: Exercise | undefined
   sessionDateISO: string
+  /** Top of this exercise's rep range in the routine, for the progression hint. */
+  repHigh?: number
 }
 
 const SET_BADGE_TONE: Record<SetType, string> = {
@@ -36,12 +39,35 @@ const SET_BADGE_TONE: Record<SetType, string> = {
   failure: 'text-danger',
 }
 
-export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateISO }: Props) {
+export function WorkoutExerciseCard({
+  entryIndex,
+  entry,
+  exercise,
+  sessionDateISO,
+  repHigh,
+}: Props) {
   const { updateSet, addSet, removeSet, toggleSetDone, removeEntry, setEntryNotes } = useWorkout()
   const confirm = useConfirm()
   const settings = useSettings()
   const last = useLastSession(entry.exerciseId, sessionDateISO)
   const priorBests = useAllTimeBests(entry.exerciseId, sessionDateISO)
+
+  // Double progression: if last time every working set topped the rep range,
+  // suggest adding weight. Only shown until a set on this exercise is logged.
+  const someLogged = entry.sets.some(isLogged)
+  const progression = someLogged
+    ? null
+    : suggestProgression(last?.entry, repHigh, {
+        usesBarbell: !!exercise?.usesBarbell,
+        plateInventoryKg: settings.plateInventoryKg,
+      })
+
+  function applyProgression() {
+    if (!progression) return
+    entry.sets.forEach((s, i) => {
+      if (!s.done) updateSet(entryIndex, i, { weightKg: progression.suggestedWeightKg })
+    })
+  }
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [plateOpen, setPlateOpen] = useState(false)
@@ -103,6 +129,21 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
           <IconMore size={20} />
         </IconButton>
       </div>
+
+      {progression && (
+        <button
+          onClick={applyProgression}
+          className="w-full flex items-center gap-2 px-4 pb-2.5 -mt-0.5 text-left active:opacity-80"
+        >
+          <span className="text-xs text-volt-dim">
+            Topped {progression.repHigh} reps last time. Add weight: try{' '}
+            {displayWeight(progression.suggestedWeightKg, units)} {unitLabel(units)}.
+          </span>
+          <span className="ml-auto shrink-0 text-2xs font-semibold bg-volt text-on-volt rounded-full px-2.5 py-0.5">
+            Apply
+          </span>
+        </button>
+      )}
 
       {showNote && (
         <div className="px-4 pb-2">

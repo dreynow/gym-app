@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../db/db'
 import { useWorkout } from '../context/WorkoutContext'
 import { useExerciseMap } from '../hooks/useExercises'
 import { navigate } from '../lib/router'
@@ -21,6 +23,17 @@ export function WorkoutScreen() {
   } = useWorkout()
   const exMap = useExerciseMap()
   const confirm = useConfirm()
+  // Rep ranges from the routine this workout was started from, for the
+  // double-progression hint (keyed by exercise id).
+  const repHighByExercise = useLiveQuery(async () => {
+    const routineId = session?.routineId
+    if (!routineId) return undefined
+    const routine = await db.routines.get(routineId)
+    if (!routine) return undefined
+    const m = new Map<string, number>()
+    for (const it of routine.items) m.set(it.exerciseId, it.repHigh)
+    return m
+  }, [session?.routineId])
   const [pickerOpen, setPickerOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -119,6 +132,7 @@ export function WorkoutScreen() {
                 entry={entry}
                 exercise={exMap.get(entry.exerciseId)}
                 sessionDateISO={session.dateISO}
+                repHigh={repHighByExercise?.get(entry.exerciseId)}
               />
             ))}
             <Button variant="secondary" full size="lg" onClick={() => setPickerOpen(true)}>
