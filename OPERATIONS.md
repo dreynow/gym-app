@@ -139,15 +139,19 @@ Kanoniv business stack.
   passphrase, so the server only stores opaque ciphertext keyed by an
   unguessable id. No accounts.
 - **Settings → Cloud backup**: endpoint URL + passphrase, Back up now / Restore.
-- **Auto-backup** on app load, throttled to ~once a day (`src/main.tsx`).
+- **Auto-backup**: immediately after finishing a workout, plus a daily
+  safety net on app load (`repo.runAutoBackup`, called from `WorkoutContext`
+  and `main.tsx`). Manual buttons remain.
 
 ### Backend (`infra/cloud-backup/`)
 
 | Resource | Identifier |
 |---|---|
-| Endpoint | `https://xbih5t41wg.execute-api.us-east-1.amazonaws.com` |
+| Endpoint | `https://backup.daresunday.com` (alias of the execute-api URL below) |
+| Custom domain | API Gateway domain `backup.daresunday.com` (ACM cert, regional), CNAME → `d-0t4zlkr2di.execute-api.us-east-1.amazonaws.com` |
+| Raw URL | `https://xbih5t41wg.execute-api.us-east-1.amazonaws.com` (still works) |
 | Lambda | `rack-backup` (nodejs20.x, `handler.handler`, env `BUCKET`) |
-| API Gateway | HTTP API `xbih5t41wg` (CORS for the app origins) |
+| API Gateway | HTTP API `xbih5t41wg`; CORS restricted to `rack.daresunday.com` (+ `localhost:5173`) |
 | S3 | `rack-backup-280012167843` (private, SSE-AES256) |
 | IAM role | `rack-backup-lambda-role` (S3 Get/Put/List + logs) |
 
@@ -219,6 +223,7 @@ progress %.
 | App deploy auth | IAM user | `rack-app-deployer` |
 | Backup compute | Lambda | `rack-backup` |
 | Backup ingress | API Gateway HTTP API | `xbih5t41wg` |
+| Backup domain | API Gateway custom domain + ACM | `backup.daresunday.com` |
 | Backup storage | S3 | `rack-backup-280012167843` |
 | Backup auth | IAM role | `rack-backup-lambda-role` |
 
@@ -269,8 +274,6 @@ Route 53 hosted zones on the account.
 
 ## 13. Pending / roadmap
 
-- **Double-progression helper** (hit top of rep range → suggest a weight bump;
-  also a future coach tool).
-- Optional **`backup.daresunday.com`** custom domain for the backup API.
-- Food database / barcode for meals.
+- Food database / barcode for meals (currently manual or AI-estimated).
+- Surface double progression as a coach tool ("bump my squat").
 - Promote the coach's memory to a longer-term store if desired.
