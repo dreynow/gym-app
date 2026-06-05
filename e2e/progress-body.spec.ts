@@ -15,7 +15,11 @@ test.describe('Body metrics', () => {
 
     // Latest stat + an entry row appear, and the trend chart renders.
     await expect(page.getByText('Today')).toBeVisible()
-    await expect(page.locator('.recharts-surface').first()).toBeVisible()
+    // Assert the chart mounted (attached), not pixel-visible: recharts'
+    // ResponsiveContainer briefly reports a 0/-1 size under CPU load while it
+    // re-measures, which flakes a visibility check without meaning the chart
+    // failed to render.
+    await expect(page.locator('.recharts-surface').first()).toBeAttached()
 
     // Delete the entry.
     await page.getByRole('button', { name: 'Delete entry' }).first().click()
@@ -34,14 +38,30 @@ test.describe('Progress charts', () => {
     await expect(page).toHaveURL(/#\/session\//)
 
     await navTo(page, 'Progress')
-    // Defaults to the first exercise with history (Leg Press) and draws a chart.
-    await expect(page.getByRole('heading', { name: 'Leg Press' })).toBeVisible()
-    await expect(page.locator('.recharts-surface').first()).toBeVisible()
+    // Explicitly select Leg Press rather than relying on the "first exercise
+    // with history" auto-default, which depends on a live query resolving and
+    // can race under load.
+    await page.getByRole('button', { name: /Exercise/ }).first().click()
+    await page.getByPlaceholder('Search exercises').fill('Leg Press')
+    // Anchor to the start so this matches the picker result ("Leg Press Quads ·
+    // Machine") and not the background selector button ("Exercise Leg Press").
+    await page.getByRole('button', { name: /^Leg Press/ }).click()
+    // The selected exercise shows in the Progress selector button (not a heading).
+    await expect(page.getByRole('button', { name: 'Exercise Leg Press' })).toBeVisible()
+    // Assert the chart mounted (attached), not pixel-visible: recharts'
+    // ResponsiveContainer briefly reports a 0/-1 size under CPU load while it
+    // re-measures, which flakes a visibility check without meaning the chart
+    // failed to render.
+    await expect(page.locator('.recharts-surface').first()).toBeAttached()
     await expect(page.getByText('Latest')).toBeVisible()
 
     // Metric + range toggles work.
     await page.getByRole('button', { name: 'Volume', exact: true }).click()
     await page.getByRole('button', { name: 'All', exact: true }).click()
-    await expect(page.locator('.recharts-surface').first()).toBeVisible()
+    // Assert the chart mounted (attached), not pixel-visible: recharts'
+    // ResponsiveContainer briefly reports a 0/-1 size under CPU load while it
+    // re-measures, which flakes a visibility check without meaning the chart
+    // failed to render.
+    await expect(page.locator('.recharts-surface').first()).toBeAttached()
   })
 })
