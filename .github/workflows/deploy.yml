@@ -1,24 +1,26 @@
 name: Test and deploy
 
-# Runs the full test suite, then (only if it passes) builds the PWA on GitHub's
-# runners and publishes it to GitHub Pages. Tests gate the deploy, so a red
-# build never ships. No local toolchain needed: pushing to the branch (or
-# running this manually via "Run workflow") tests and deploys the site.
+# Runs the full test suite, then (only if it passes) builds the PWA and deploys
+# it to AWS: syncs the static build to S3 and invalidates the CloudFront
+# distribution that serves https://rack.daresunday.com. Tests gate the deploy,
+# so a red build never ships.
 on:
   push:
     branches: ['claude/kind-clarke-exE3K']
   workflow_dispatch:
 
-# Permissions required by the Pages deploy.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-# Allow one concurrent deployment; newer pushes supersede in-flight ones.
+# One deploy at a time; newer pushes supersede in-flight ones.
 concurrency:
-  group: 'pages'
+  group: 'deploy'
   cancel-in-progress: true
+
+env:
+  S3_BUCKET: rack-app-280012167843
+  CLOUDFRONT_DISTRIBUTION_ID: E3ITMFSEAL4BIY
+  AWS_REGION: us-east-1
 
 jobs:
   test:
@@ -44,7 +46,7 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  build:
+  deploy:
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -54,22 +56,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Build (with Pages base path)
+      # Root base path (default) for the custom domain.
+      - name: Build
         run: npm run build
-        env:
-          # Project site lives at https://<owner>.github.io/gym-app/
-          BASE_PATH: /gym-app/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          path: ./dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Sync to S3
+        run: aws s3 sync dist/ "s3://${S3_BUCKET}/" --delete
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" --paths '/*'
