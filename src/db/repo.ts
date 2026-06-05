@@ -13,6 +13,7 @@ import { uid } from '../lib/id'
 import {
   matchWorkoutsToSessions,
   parseAppleHealthExport,
+  parseAppleHealthFile,
   parseAppleHealthStream,
   type AppleHealthData,
   type HealthWorkout,
@@ -264,6 +265,18 @@ export async function importAppleHealthStream(
   opts: HealthImportOptions = {},
 ): Promise<HealthImportResult> {
   const data = await parseAppleHealthStream(stream, { onProgress: opts.onProgress })
+  return mergeHealthData(data, opts)
+}
+
+/**
+ * Import from a File/Blob using slice-based reading (mobile-safe; does not rely
+ * on `Blob.stream()`). This is what the UI uses.
+ */
+export async function importAppleHealthFile(
+  file: Blob,
+  opts: HealthImportOptions = {},
+): Promise<HealthImportResult> {
+  const data = await parseAppleHealthFile(file, { onProgress: opts.onProgress })
   return mergeHealthData(data, opts)
 }
 

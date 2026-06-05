@@ -199,36 +199,77 @@ export interface ParseStreamOptions {
   onProgress?: (bytesRead: number) => void
 }
 
-export async function parseAppleHealthStream(
-  stream: ReadableStream<Uint8Array>,
-  opts: ParseStreamOptions = {},
+/** Shared core: scan an async sequence of byte chunks into AppleHealthData. */
+async function parseChunks(
+  chunks: AsyncIterable<Uint8Array>,
+  opts: ParseStreamOptions,
 ): Promise<AppleHealthData> {
   const sink: Sink = { workouts: [], bodyMass: [] }
-  const reader = stream.getReader()
   const decoder = new TextDecoder('utf-8')
   let buf = ''
   let bytesRead = 0
   let lastReported = 0
+  for await (const value of chunks) {
+    bytesRead += value.byteLength
+    buf += decoder.decode(value, { stream: true })
+    buf = drainBuffer(buf, sink)
+    // Throttle progress to every ~4MB so React isn't flooded.
+    if (opts.onProgress && bytesRead - lastReported >= 4_000_000) {
+      lastReported = bytesRead
+      opts.onProgress(bytesRead)
+    }
+  }
+  buf += decoder.decode()
+  drainBuffer(buf, sink)
+  opts.onProgress?.(bytesRead)
+  return sink
+}
+
+async function* readableToIterable(
+  stream: ReadableStream<Uint8Array>,
+): AsyncGenerator<Uint8Array> {
+  const reader = stream.getReader()
   try {
     for (;;) {
       const { done, value } = await reader.read()
-      if (done) break
-      bytesRead += value.byteLength
-      buf += decoder.decode(value, { stream: true })
-      buf = drainBuffer(buf, sink)
-      // Throttle progress to every ~4MB so React isn't flooded.
-      if (opts.onProgress && bytesRead - lastReported >= 4_000_000) {
-        lastReported = bytesRead
-        opts.onProgress(bytesRead)
-      }
+      if (done) return
+      if (value) yield value
     }
-    buf += decoder.decode()
-    drainBuffer(buf, sink)
-    opts.onProgress?.(bytesRead)
   } finally {
     reader.releaseLock()
   }
-  return sink
+}
+
+async function* readBlobChunks(
+  blob: Blob,
+  chunkSize = 8 * 1024 * 1024,
+): AsyncGenerator<Uint8Array> {
+  let offset = 0
+  while (offset < blob.size) {
+    const slice = blob.slice(offset, offset + chunkSize)
+    yield new Uint8Array(await slice.arrayBuffer())
+    offset += chunkSize
+  }
+}
+
+export function parseAppleHealthStream(
+  stream: ReadableStream<Uint8Array>,
+  opts: ParseStreamOptions = {},
+): Promise<AppleHealthData> {
+  return parseChunks(readableToIterable(stream), opts)
+}
+
+/**
+ * Parse a File/Blob by reading it in explicit slices rather than via
+ * `Blob.stream()`. This is the robust path for mobile: iOS Safari's
+ * `File.stream()` support is patchy and tab memory is tight, whereas
+ * slice + arrayBuffer works everywhere and stays bounded (one chunk at a time).
+ */
+export function parseAppleHealthFile(
+  file: Blob,
+  opts: ParseStreamOptions = {},
+): Promise<AppleHealthData> {
+  return parseChunks(readBlobChunks(file), opts)
 }
 
 export interface SessionHealthPatch {

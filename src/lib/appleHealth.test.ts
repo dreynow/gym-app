@@ -3,6 +3,7 @@ import {
   matchWorkoutsToSessions,
   parseAppleDate,
   parseAppleHealthExport,
+  parseAppleHealthFile,
   parseAppleHealthStream,
 } from './appleHealth'
 
@@ -161,5 +162,20 @@ describe('parseAppleHealthStream', () => {
     expect(whole.workouts).toHaveLength(2)
     const empty = await parseAppleHealthStream(streamOf([]))
     expect(empty).toEqual({ workouts: [], bodyMass: [] })
+  })
+})
+
+describe('parseAppleHealthFile', () => {
+  it('reads a Blob in slices (mobile-safe) and matches the whole parse', async () => {
+    const blob = new Blob([REAL_SHAPE])
+    const fromFile = await parseAppleHealthFile(blob)
+    expect(fromFile).toEqual(parseAppleHealthExport(REAL_SHAPE))
+  })
+
+  it('reports progress up to the full byte length', async () => {
+    const blob = new Blob([REAL_SHAPE])
+    let last = 0
+    await parseAppleHealthFile(blob, { onProgress: (b) => (last = b) })
+    expect(last).toBe(blob.size)
   })
 })

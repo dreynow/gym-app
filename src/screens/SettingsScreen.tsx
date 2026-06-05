@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import {
-  importAppleHealthStream,
+  importAppleHealthFile,
   removeImportedAppleHealthSessions,
   updateSettings,
   type HealthImportResult,
@@ -103,10 +103,11 @@ export function SettingsScreen() {
     setHealthBusy(true)
     setHealthProgress(0)
     try {
-      // Stream the file rather than reading it whole: a real export.xml can be
-      // hundreds of MB, well past V8's max string length.
+      // Read the file in slices rather than whole: a real export.xml can be
+      // hundreds of MB (past V8's max string length), and slice-based reading
+      // is the mobile-safe path (iOS Safari File.stream() is unreliable).
       const total = file.size || 1
-      const res = await importAppleHealthStream(file.stream(), {
+      const res = await importAppleHealthFile(file, {
         createSessions: backfillWorkouts,
         onProgress: (bytes) => setHealthProgress(Math.min(99, Math.round((bytes / total) * 100))),
       })
