@@ -4,6 +4,7 @@ import type {
   BodyMetric,
   CoachMessage,
   Exercise,
+  Meal,
   Routine,
   RoutineItem,
   Session,
@@ -199,6 +200,20 @@ export async function saveBodyMetric(metric: BodyMetric): Promise<void> {
 
 export async function deleteBodyMetric(id: string): Promise<void> {
   await db.bodyMetrics.delete(id)
+}
+
+// ---------- Meals ----------
+
+export function newMeal(data: Pick<Meal, 'day' | 'name' | 'calories' | 'proteinG'>): Meal {
+  return { id: uid('meal'), createdAt: new Date().toISOString(), ...data }
+}
+
+export async function saveMeal(meal: Meal): Promise<void> {
+  await db.meals.put(meal)
+}
+
+export async function deleteMeal(id: string): Promise<void> {
+  await db.meals.delete(id)
 }
 
 // ---------- AI coach ----------

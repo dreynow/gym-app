@@ -15,6 +15,7 @@ import {
 } from '../lib/backup'
 import { num } from '../lib/format'
 import { navigate } from '../lib/router'
+import { useConfirm } from '../components/ConfirmDialog'
 import { COACH_MODELS, DEFAULT_COACH_MODEL } from '../lib/coach'
 import {
   isIOS,
@@ -37,6 +38,7 @@ import {
   IconCheck,
   IconDownload,
   IconHeart,
+  IconLibrary,
   IconPlus,
   IconSparkles,
   IconTrash,
@@ -46,6 +48,7 @@ import {
 
 export function SettingsScreen() {
   const settings = useSettings()
+  const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
   const [pendingImport, setPendingImport] = useState<string | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
@@ -141,7 +144,16 @@ export function SettingsScreen() {
   }
 
   async function removeImportedWorkouts() {
-    if (!confirm('Remove all workouts that were imported from Apple Health? Workouts you logged in Rack are kept.')) return
+    if (
+      !(await confirm({
+        title: 'Remove imported workouts',
+        message:
+          'Remove all workouts that were imported from Apple Health? Workouts you logged in Rack are kept.',
+        confirmLabel: 'Remove',
+        danger: true,
+      }))
+    )
+      return
     setRemovedMsg(null)
     const n = await removeImportedAppleHealthSessions()
     setHealthResult(null)
@@ -418,6 +430,12 @@ export function SettingsScreen() {
           </Field>
           <Button variant="secondary" full onClick={() => navigate({ name: 'coach' })}>
             <IconSparkles size={18} /> Open coach
+          </Button>
+        </Section>
+
+        <Section title="Exercises">
+          <Button variant="secondary" full onClick={() => navigate({ name: 'exercises' })}>
+            <IconLibrary size={18} /> Exercise library
           </Button>
         </Section>
 

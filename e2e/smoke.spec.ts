@@ -22,10 +22,8 @@ test.describe('App shell, seeding and navigation', () => {
     await navTo(page, 'Body')
     await expect(page.getByRole('heading', { name: 'Body', level: 1 })).toBeVisible()
 
-    await navTo(page, 'Library')
-    await expect(page.getByRole('heading', { name: 'Library', level: 1 })).toBeVisible()
-    // The seeded library should have a healthy count of exercises.
-    await expect(page.getByText(/\d+ exercises/)).toBeVisible()
+    await navTo(page, 'Meals')
+    await expect(page.getByRole('heading', { name: 'Meals', level: 1 })).toBeVisible()
 
     await navTo(page, 'Train')
     await expect(page.getByRole('button', { name: 'Start Empty Workout' })).toBeVisible()

@@ -144,6 +144,17 @@ export interface CoachMessage {
   createdAt: string
 }
 
+/** A logged meal for a given local day. Calories in kcal, protein in grams. */
+export interface Meal {
+  id: string
+  /** Local day key, "YYYY-MM-DD". */
+  day: string
+  name: string
+  calories: number
+  proteinG: number
+  createdAt: string
+}
+
 /** A detected personal record, surfaced as a badge in the UI. */
 export type PrKind = 'weight' | 'e1rm' | 'volume'
 

@@ -3,6 +3,7 @@ import type {
   BodyMetric,
   CoachMessage,
   Exercise,
+  Meal,
   PrRecord,
   Routine,
   Session,
@@ -22,6 +23,7 @@ export class IronlogDB extends Dexie {
   settings!: EntityTable<Settings, 'id'>
   prs!: EntityTable<PrRecord, 'id'>
   coachMessages!: EntityTable<CoachMessage, 'id'>
+  meals!: EntityTable<Meal, 'id'>
 
   constructor() {
     super('ironlog')
@@ -37,6 +39,10 @@ export class IronlogDB extends Dexie {
     // v2 adds the AI coach conversation. Dexie keeps v1 data intact.
     this.version(2).stores({
       coachMessages: 'id, createdAt',
+    })
+    // v3 adds meal logging, queried by local day.
+    this.version(3).stores({
+      meals: 'id, day',
     })
   }
 }

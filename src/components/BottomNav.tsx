@@ -4,7 +4,7 @@ import {
   IconChart,
   IconDumbbell,
   IconHistory,
-  IconLibrary,
+  IconMeal,
 } from './Icons'
 import { cx } from './ui'
 
@@ -13,7 +13,7 @@ const ITEMS: { route: Route['name']; label: string; Icon: typeof IconDumbbell }[
   { route: 'history', label: 'History', Icon: IconHistory },
   { route: 'progress', label: 'Progress', Icon: IconChart },
   { route: 'body', label: 'Body', Icon: IconBody },
-  { route: 'exercises', label: 'Library', Icon: IconLibrary },
+  { route: 'meals', label: 'Meals', Icon: IconMeal },
 ]
 
 export function BottomNav() {

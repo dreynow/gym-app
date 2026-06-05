@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { autoAcceptDialogs, gotoHome, navTo } from './helpers'
+import { autoAcceptDialogs, gotoHome, gotoExercises } from './helpers'
 
 test.describe('Exercise library', () => {
   test.beforeEach(({ page }) => autoAcceptDialogs(page))
 
   test('search and muscle filter narrow the list', async ({ page }) => {
     await gotoHome(page)
-    await navTo(page, 'Library')
+    await gotoExercises(page)
 
     await page.getByPlaceholder('Search exercises').fill('squat')
     await expect(page.getByText('Back Squat')).toBeVisible()
@@ -20,7 +20,7 @@ test.describe('Exercise library', () => {
 
   test('create a custom exercise, then edit it', async ({ page }) => {
     await gotoHome(page)
-    await navTo(page, 'Library')
+    await gotoExercises(page)
 
     await page.getByRole('button', { name: 'New exercise' }).click()
     await page.getByLabel('Name').fill('Zercher Squat')

@@ -31,6 +31,7 @@ import {
   Trash2,
   Trophy,
   Upload,
+  Utensils,
   X,
 } from 'lucide-react'
 
@@ -63,3 +64,4 @@ export const IconFlame = Flame
 export const IconActivity = Activity
 export const IconSparkles = Sparkles
 export const IconSend = Send
+export const IconMeal = Utensils

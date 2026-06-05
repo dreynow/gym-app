@@ -12,6 +12,7 @@ export type Route =
   | { name: 'progress' }
   | { name: 'body' }
   | { name: 'exercises' }
+  | { name: 'meals' }
   | { name: 'settings' }
   | { name: 'coach' }
   | { name: 'workout' }
@@ -32,6 +33,8 @@ function parseHash(hash: string): Route {
       return { name: 'body' }
     case 'exercises':
       return { name: 'exercises' }
+    case 'meals':
+      return { name: 'meals' }
     case 'settings':
       return { name: 'settings' }
     case 'coach':
