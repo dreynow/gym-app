@@ -48,7 +48,7 @@ export function HistoryScreen() {
                 <Card key={s.id}>
                   <button
                     onClick={() => navigate({ name: 'session', id: s.id })}
-                    className="w-full text-left p-4 active:bg-ink-800 transition-colors rounded-2xl"
+                    className="w-full text-left p-4 active:bg-surface-2 transition-colors rounded-2xl"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
@@ -62,14 +62,14 @@ export function HistoryScreen() {
                             </Pill>
                           )}
                         </div>
-                        <p className="text-xs text-muted">{relativeDate(s.dateISO)}</p>
+                        <p className="text-xs text-fg-2">{relativeDate(s.dateISO)}</p>
                       </div>
-                      <IconChevronRight size={18} className="text-faint shrink-0" />
+                      <IconChevronRight size={18} className="text-fg-3 shrink-0" />
                     </div>
-                    <p className="text-sm text-muted mt-2 line-clamp-1">
+                    <p className="text-sm text-fg-2 mt-2 line-clamp-1">
                       {names.join(', ') || 'No exercises'}
                     </p>
-                    <div className="flex gap-4 mt-2 text-xs text-faint">
+                    <div className="flex gap-4 mt-2 text-xs text-fg-3">
                       <span>{formatDurationShort(s.durationSeconds)}</span>
                       <span>{sets} sets</span>
                       <span>

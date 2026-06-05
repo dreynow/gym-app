@@ -8,8 +8,9 @@ import { dirname, join } from 'node:path'
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons')
 mkdirSync(OUT, { recursive: true })
 
-const INK = [10, 10, 15, 255]
-const VOLT = [182, 244, 58, 255]
+// Rack palette: charcoal background (#0B0B0D) + volt lime (#D6FF3F)
+const INK = [11, 11, 13, 255]
+const VOLT = [214, 255, 63, 255]
 
 function crc32(buf) {
   let c = ~0

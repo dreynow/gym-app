@@ -17,13 +17,13 @@ export function Select<T extends string>({
       value={value}
       onChange={(e) => onChange(e.target.value as T)}
       className={cx(
-        'w-full h-11 px-3 rounded-xl bg-ink-800 border border-ink-700 text-fg',
-        'focus:outline-none focus:border-volt-500 appearance-none',
+        'w-full h-11 px-3 rounded-xl bg-surface-2 border border-line-2 text-fg-1',
+        'focus:outline-none focus:border-volt appearance-none',
         className,
       )}
     >
       {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-ink-800">
+        <option key={o.value} value={o.value} className="bg-surface-2">
           {o.label}
         </option>
       ))}

@@ -84,7 +84,7 @@ export function ExercisePicker({
           <div className="relative">
             <IconSearch
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-faint"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-3"
             />
             <TextInput
               value={query}
@@ -96,7 +96,7 @@ export function ExercisePicker({
 
           <button
             onClick={() => setFormOpen(true)}
-            className="flex items-center gap-2 w-full text-volt-400 text-sm font-medium py-2"
+            className="flex items-center gap-2 w-full text-volt-dim text-sm font-medium py-2"
           >
             <IconPlus size={18} /> Create new exercise
           </button>
@@ -110,12 +110,12 @@ export function ExercisePicker({
                   onClick={() => pick(e)}
                   className={cx(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors',
-                    isSel ? 'bg-volt-500/15' : 'active:bg-ink-800',
+                    isSel ? 'bg-volt/15' : 'active:bg-surface-2',
                   )}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{e.name}</div>
-                    <div className="text-xs text-faint">
+                    <div className="text-xs text-fg-3">
                       {MUSCLE_LABEL[e.muscleGroup]} · {EQUIPMENT_LABEL[e.equipment]}
                     </div>
                   </div>
@@ -124,8 +124,8 @@ export function ExercisePicker({
                       className={cx(
                         'h-6 w-6 rounded-md border flex items-center justify-center text-xs',
                         isSel
-                          ? 'bg-volt-500 border-volt-500 text-ink-950'
-                          : 'border-ink-600',
+                          ? 'bg-volt border-volt text-on-volt'
+                          : 'border-line-2',
                       )}
                     >
                       {isSel ? '✓' : ''}
@@ -135,7 +135,7 @@ export function ExercisePicker({
               )
             })}
             {filtered.length === 0 && (
-              <p className="text-center text-muted text-sm py-6">
+              <p className="text-center text-fg-2 text-sm py-6">
                 No matches. Create a new exercise above.
               </p>
             )}

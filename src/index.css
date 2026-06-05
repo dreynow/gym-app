@@ -1,35 +1,11 @@
 @import 'tailwindcss';
+@import './theme.css';
 
 /*
-  Ironlog theme: dark, athletic, sharp.
-  Base is near-black with a faint blue cast; accent is an electric lime/volt
-  for primary actions, with a cyan secondary. Designed for OLED and one-handed
-  use at the gym.
+  App-level base styles layered on top of the Rack design tokens. Token values
+  (color, type, radius, shadow) live in theme.css and must not be re-declared
+  here — this file is only for behavioural/base concerns.
 */
-@theme {
-  --color-ink-950: #07070b;
-  --color-ink-900: #0a0a0f;
-  --color-ink-850: #101018;
-  --color-ink-800: #15151f;
-  --color-ink-700: #1d1d2a;
-  --color-ink-600: #2a2a3a;
-  --color-ink-500: #3a3a4f;
-
-  --color-fg: #f4f4f6;
-  --color-muted: #9a9aae;
-  --color-faint: #6b6b80;
-
-  --color-volt-400: #c8ff4d;
-  --color-volt-500: #b6f43a;
-  --color-volt-600: #9bd915;
-
-  --color-cyan-accent: #38e0d0;
-  --color-warn: #ffb020;
-  --color-danger: #ff5470;
-  --color-pr: #ffd23f;
-
-  --radius-xl: 1rem;
-}
 
 html,
 body,
@@ -38,13 +14,6 @@ body,
 }
 
 body {
-  background-color: var(--color-ink-900);
-  color: var(--color-fg);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
   /* Prevent pull-to-refresh / rubber banding from interrupting logging */
   overscroll-behavior-y: none;
   touch-action: manipulation;
@@ -72,12 +41,13 @@ input[type='number'] {
 /* Thin scrollbars where they appear */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-ink-600) transparent;
+  scrollbar-color: var(--color-surface-3) transparent;
 }
 
+/* Motion: quick + physical, per the Rack system. Honour reduced motion. */
 @keyframes pop-in {
   0% {
-    transform: scale(0.85);
+    transform: scale(0.96);
     opacity: 0;
   }
   100% {
@@ -86,5 +56,29 @@ input[type='number'] {
   }
 }
 .animate-pop {
-  animation: pop-in 0.18s ease-out;
+  animation: pop-in var(--dur-base, 200ms) var(--ease-out-rack, ease-out);
+}
+
+@keyframes sheet-up {
+  0% {
+    transform: translateY(8%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-sheet {
+  animation: sheet-up var(--dur-slow, 320ms) var(--ease-out-rack, ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop,
+  .animate-sheet {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
 }

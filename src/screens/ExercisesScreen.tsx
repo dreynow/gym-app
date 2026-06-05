@@ -46,7 +46,7 @@ export function ExercisesScreen() {
 
       <div className="p-4 space-y-3">
         <div className="relative">
-          <IconSearch size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+          <IconSearch size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-3" />
           <TextInput
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -81,7 +81,7 @@ export function ExercisesScreen() {
                     <span className="font-medium truncate">{e.name}</span>
                     {e.isCustom && <Pill tone="cyan">Custom</Pill>}
                   </div>
-                  <div className="text-xs text-faint mt-0.5">
+                  <div className="text-xs text-fg-3 mt-0.5">
                     {MUSCLE_LABEL[e.muscleGroup]} · {EQUIPMENT_LABEL[e.equipment]}
                   </div>
                 </div>
@@ -118,7 +118,7 @@ function Chip({
       onClick={onClick}
       className={cx(
         'shrink-0 px-3 h-8 rounded-full text-sm font-medium transition-colors',
-        active ? 'bg-volt-500 text-ink-950' : 'bg-ink-800 text-muted',
+        active ? 'bg-volt text-on-volt' : 'bg-surface-2 text-fg-2',
       )}
     >
       {children}

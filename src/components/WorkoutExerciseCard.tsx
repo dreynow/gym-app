@@ -29,9 +29,9 @@ interface Props {
 }
 
 const SET_BADGE_TONE: Record<SetType, string> = {
-  warmup: 'text-warn',
-  working: 'text-fg',
-  drop: 'text-cyan-accent',
+  warmup: 'text-warning',
+  working: 'text-fg-1',
+  drop: 'text-info',
   failure: 'text-danger',
 }
 
@@ -86,7 +86,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
       <div className="flex items-center gap-2 px-4 pt-3.5 pb-2">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold truncate">{exercise?.name ?? 'Unknown exercise'}</h3>
-          <p className="text-xs text-faint">
+          <p className="text-xs text-fg-3">
             {last ? `Last: ${relativeDate(last.session.dateISO)}` : 'No previous data'}
             {' · '}
             {formatDuration(rest)} rest
@@ -108,13 +108,13 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
             value={entry.notes ?? ''}
             onChange={(e) => setEntryNotes(entryIndex, e.target.value)}
             placeholder="Note for this exercise"
-            className="w-full h-9 px-3 rounded-lg bg-ink-800 text-sm border border-ink-700 focus:outline-none focus:border-volt-500 placeholder:text-faint"
+            className="w-full h-9 px-3 rounded-lg bg-surface-2 text-sm border border-line-2 focus:outline-none focus:border-volt placeholder:text-fg-3"
           />
         </div>
       )}
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1.9rem_1fr_3.4rem_3.4rem_2.6rem] gap-1.5 px-4 pb-1 text-[11px] uppercase tracking-wide text-faint">
+      <div className="grid grid-cols-[1.9rem_1fr_3.4rem_3.4rem_2.6rem] gap-1.5 px-4 pb-1.5 text-2xs font-semibold uppercase tracking-[0.08em] text-fg-3">
         <span className="text-center">Set</span>
         <span>Last</span>
         <span className="text-center">{unitLabel(units)}</span>
@@ -136,23 +136,23 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
             <div
               key={setIndex}
               className={cx(
-                'grid grid-cols-[1.9rem_1fr_3.4rem_3.4rem_2.6rem] gap-1.5 items-center rounded-lg',
-                set.done && 'bg-volt-500/10',
+                'grid grid-cols-[1.9rem_1fr_3.4rem_3.4rem_2.6rem] gap-1.5 items-center rounded-md border',
+                set.done ? 'bg-volt-ghost border-volt-line' : 'border-transparent',
               )}
             >
               <button
                 onClick={() => setSetMenu(setIndex)}
                 className={cx(
-                  'h-11 grid place-items-center font-bold text-sm rounded-lg active:bg-ink-700',
+                  'h-11 grid place-items-center font-mono font-semibold text-sm rounded-md active:bg-surface-3',
                   SET_BADGE_TONE[set.type],
                 )}
               >
                 {setLabels[setIndex]}
               </button>
 
-              <div className="flex items-center gap-1 min-w-0 text-sm text-faint truncate">
+              <div className="flex items-center gap-1 min-w-0 font-mono text-sm text-fg-3 truncate tabular-nums">
                 {prevText}
-                {pr && <IconTrophy size={13} className="text-pr shrink-0" />}
+                {pr && <IconTrophy size={13} className="text-volt shrink-0" />}
               </div>
 
               <input
@@ -162,7 +162,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
                 placeholder={prevSet ? displayWeight(prevSet.weightKg, units) : '0'}
                 onFocus={(e) => e.target.select()}
                 onChange={(e) => updateSet(entryIndex, setIndex, { weightKg: fromDisplay(e.target.value) })}
-                className="h-11 w-full text-center rounded-lg bg-ink-800 border border-ink-700 focus:outline-none focus:border-volt-500 font-medium"
+                className="h-11 w-full text-center rounded-md bg-surface-2 border border-line-2 focus:outline-none focus:border-volt-line font-mono font-semibold text-[17px] tabular-nums"
               />
               <input
                 type="number"
@@ -175,14 +175,14 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
                     reps: e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value))),
                   })
                 }
-                className="h-11 w-full text-center rounded-lg bg-ink-800 border border-ink-700 focus:outline-none focus:border-volt-500 font-medium"
+                className="h-11 w-full text-center rounded-md bg-surface-2 border border-line-2 focus:outline-none focus:border-volt-line font-mono font-semibold text-[17px] tabular-nums"
               />
               <button
                 onClick={() => toggleSetDone(entryIndex, setIndex, rest)}
                 aria-label={set.done ? 'Mark set not done' : 'Mark set done'}
                 className={cx(
-                  'h-11 w-full grid place-items-center rounded-lg transition-colors',
-                  set.done ? 'bg-volt-500 text-ink-950' : 'bg-ink-800 text-faint active:bg-ink-700',
+                  'h-11 w-full grid place-items-center rounded-md transition-colors',
+                  set.done ? 'bg-volt text-on-volt' : 'bg-surface-2 text-fg-3 active:bg-surface-3',
                 )}
               >
                 <IconCheck size={20} />
@@ -208,7 +208,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
                 if (setMenu !== null) updateSet(entryIndex, setMenu, { type: t })
                 setSetMenu(null)
               }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl active:bg-ink-800 text-left"
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl active:bg-surface-2 text-left"
             >
               <span className={cx('w-6 text-center font-bold', SET_BADGE_TONE[t])}>
                 {SET_TYPE_SHORT[t] || '•'}
@@ -221,7 +221,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
               if (setMenu !== null) removeSet(entryIndex, setMenu)
               setSetMenu(null)
             }}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl active:bg-ink-800 text-left text-danger"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl active:bg-surface-2 text-left text-danger"
           >
             <IconTrash size={18} className="ml-0.5" /> Remove set
           </button>
@@ -233,11 +233,11 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-sm">
-              <IconTimer size={18} className="text-cyan-accent" /> Rest timer
+              <IconTimer size={18} className="text-info" /> Rest timer
             </span>
             <div className="flex items-center gap-2">
               <Stepper value={rest} min={0} max={600} step={15} onChange={setRest} />
-              <span className="text-sm text-faint w-12 tabular-nums">{formatDuration(rest)}</span>
+              <span className="text-sm text-fg-3 w-12 tabular-nums">{formatDuration(rest)}</span>
             </div>
           </div>
           <button
@@ -247,7 +247,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
             }}
             className="w-full flex items-center gap-3 px-1 py-2 text-left"
           >
-            <IconNote size={18} className="text-muted" /> Add a note
+            <IconNote size={18} className="text-fg-2" /> Add a note
           </button>
           {exercise?.usesBarbell && (
             <button
@@ -257,7 +257,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
               }}
               className="w-full flex items-center gap-3 px-1 py-2 text-left"
             >
-              <IconCalculator size={18} className="text-muted" /> Plate calculator
+              <IconCalculator size={18} className="text-fg-2" /> Plate calculator
             </button>
           )}
           <button

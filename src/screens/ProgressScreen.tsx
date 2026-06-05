@@ -103,15 +103,15 @@ export function ProgressScreen() {
       <div className="p-4 space-y-4">
         <button
           onClick={() => setPickerOpen(true)}
-          className="w-full flex items-center justify-between bg-ink-850 border border-ink-700/60 rounded-2xl px-4 py-3.5 active:bg-ink-800"
+          className="w-full flex items-center justify-between bg-surface-1 border border-line-2 rounded-2xl px-4 py-3.5 active:bg-surface-2"
         >
           <div className="text-left">
-            <div className="text-xs text-faint">Exercise</div>
+            <div className="text-xs text-fg-3">Exercise</div>
             <div className="font-semibold">
               {activeExercise?.name ?? 'Select an exercise'}
             </div>
           </div>
-          <IconChevronRight size={20} className="text-faint" />
+          <IconChevronRight size={20} className="text-fg-3" />
         </button>
 
         {!activeId ? (
@@ -147,23 +147,23 @@ export function ProgressScreen() {
 
             <Card className="p-3 pt-4">
               {!data || data.length === 0 ? (
-                <p className="text-center text-muted py-16 text-sm">
+                <p className="text-center text-fg-2 py-16 text-sm">
                   No data in this range. Log this exercise to see a trend.
                 </p>
               ) : (
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                      <CartesianGrid stroke="#2a2a3a" vertical={false} />
+                      <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                       <XAxis
                         dataKey="label"
-                        stroke="#6b6b80"
+                        stroke="#76767F"
                         fontSize={11}
                         tickLine={false}
                         minTickGap={24}
                       />
                       <YAxis
-                        stroke="#6b6b80"
+                        stroke="#76767F"
                         fontSize={11}
                         tickLine={false}
                         axisLine={false}
@@ -172,12 +172,12 @@ export function ProgressScreen() {
                       />
                       <Tooltip
                         contentStyle={{
-                          background: '#15151f',
-                          border: '1px solid #2a2a3a',
+                          background: '#141417',
+                          border: '1px solid rgba(255,255,255,0.06)',
                           borderRadius: 12,
                           fontSize: 13,
                         }}
-                        labelStyle={{ color: '#9a9aae' }}
+                        labelStyle={{ color: '#ADADB5' }}
                         formatter={(value) => [
                           fmt(Number(value), metric, settings.units),
                           METRIC_LABEL[metric],
@@ -186,9 +186,9 @@ export function ProgressScreen() {
                       <Line
                         type="monotone"
                         dataKey={metric}
-                        stroke="#b6f43a"
+                        stroke="#D6FF3F"
                         strokeWidth={2.5}
-                        dot={{ r: 2.5, fill: '#b6f43a' }}
+                        dot={{ r: 2.5, fill: '#D6FF3F' }}
                         activeDot={{ r: 5 }}
                         isAnimationActive={false}
                       />
@@ -239,15 +239,15 @@ function Stat({
   tone?: 'up' | 'down'
 }) {
   return (
-    <div className="bg-ink-850 border border-ink-700/60 rounded-xl p-3 text-center">
+    <div className="bg-surface-1 border border-line-2 rounded-xl p-3 text-center">
       <div
         className={`text-base font-bold tabular-nums ${
-          tone === 'up' ? 'text-volt-400' : tone === 'down' ? 'text-danger' : 'text-fg'
+          tone === 'up' ? 'text-volt-dim' : tone === 'down' ? 'text-danger' : 'text-fg-1'
         }`}
       >
         {value}
       </div>
-      <div className="text-[11px] text-faint">{label}</div>
+      <div className="text-[11px] text-fg-3">{label}</div>
     </div>
   )
 }

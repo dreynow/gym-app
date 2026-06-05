@@ -14,7 +14,7 @@ export function ResumeBanner() {
       onClick={() => navigate({ name: 'workout' })}
       className="fixed bottom-[68px] inset-x-0 z-30 mx-auto max-w-md px-3"
     >
-      <div className="flex items-center gap-3 bg-volt-500 text-ink-950 rounded-2xl px-4 py-3 shadow-lg shadow-volt-600/20">
+      <div className="flex items-center gap-3 bg-volt text-on-volt rounded-2xl px-4 py-3 shadow-lg shadow-volt-deep/20">
         <IconPlay size={20} />
         <div className="flex-1 text-left">
           <div className="font-semibold text-sm leading-tight">Workout in progress</div>

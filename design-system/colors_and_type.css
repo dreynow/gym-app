@@ -1,0 +1,300 @@
+/* ==========================================================================
+   RACK — Design Foundations
+   Local-first strength tracker. Dark, premium, athletic.
+   Single source of truth for color + type. Import this everywhere.
+   ========================================================================== */
+
+/* ----------------------------------------------------------------------------
+   FONTS — Geist (UI) + Geist Mono (numerals / data)
+   Files live in /fonts. For HTML cards that sit in a subfolder, adjust the
+   relative url() or load Geist from Google Fonts (it is published there).
+---------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/Geist-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/Geist-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/Geist-SemiBold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/Geist-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/GeistMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/GeistMono-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/GeistMono-SemiBold.woff2") format("woff2");
+}
+
+:root {
+  /* ========================================================================
+     RAW COLOR TOKENS
+     Charcoal surfaces, layered. One accent: volt lime. Restrained semantics.
+     ======================================================================== */
+
+  /* Surfaces (background depth ladder, dark -> light) */
+  --black:        #060607;   /* app void, behind everything */
+  --bg:           #0B0B0D;   /* primary app background */
+  --surface-1:    #141417;   /* cards, sheets */
+  --surface-2:    #1B1B1F;   /* inputs, elevated rows */
+  --surface-3:    #242429;   /* hover / pressed surface */
+  --surface-4:    #2E2E34;   /* active selection, chips */
+
+  /* Foreground (text + icon ladder) */
+  --fg-1:         #F5F5F6;   /* primary text, headings */
+  --fg-2:         #ADADB5;   /* secondary text, labels */
+  --fg-3:         #76767F;   /* tertiary, captions, placeholder */
+  --fg-4:         #4D4D55;   /* disabled, faint dividers as text */
+
+  /* Borders / hairlines (on dark, use translucent white) */
+  --line-1:       rgba(255, 255, 255, 0.06);  /* default hairline */
+  --line-2:       rgba(255, 255, 255, 0.10);  /* card / input border */
+  --line-3:       rgba(255, 255, 255, 0.16);  /* hover / focus border */
+
+  /* Accent — VOLT LIME (the only brand color; use sparingly) */
+  --volt:         #D6FF3F;   /* primary accent: CTAs, active, PR */
+  --volt-bright:  #E4FF6B;   /* hover */
+  --volt-deep:    #BCE71F;   /* pressed */
+  --volt-dim:     #9BB82A;   /* on-surface text accent, lower glare */
+  --volt-ghost:   rgba(214, 255, 63, 0.12); /* tints, active fills */
+  --volt-line:    rgba(214, 255, 63, 0.35); /* accent borders */
+  --on-volt:      #0B0B0D;   /* text/icons on a volt fill */
+
+  /* Semantic (muted, dark-theme tuned — used only when meaning demands it) */
+  --success:      #5CD08A;
+  --success-ghost: rgba(92, 208, 138, 0.12);
+  --warning:      #F0B43C;
+  --warning-ghost: rgba(240, 180, 60, 0.12);
+  --danger:       #F06A5A;
+  --danger-ghost: rgba(240, 106, 90, 0.12);
+  --info:         #5AA8F0;
+  --info-ghost:   rgba(90, 168, 240, 0.12);
+
+  /* Data-viz ramp (charts: 1RM, volume, bodyweight) */
+  --data-volt:    #D6FF3F;
+  --data-blue:    #5AA8F0;
+  --data-violet:  #B488F0;
+  --data-teal:    #45D0C0;
+  --data-amber:   #F0B43C;
+  --data-grid:    rgba(255, 255, 255, 0.06);
+
+  /* ========================================================================
+     TYPE — families, weights, raw scale
+     ======================================================================== */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-semi:    600;
+  --w-bold:    700;
+
+  /* Modular-ish scale, mobile-app tuned */
+  --text-3xs: 10px;
+  --text-2xs: 11px;
+  --text-xs:  12px;
+  --text-sm:  13px;
+  --text-md:  15px;   /* base body */
+  --text-lg:  17px;
+  --text-xl:  20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 38px;
+  --text-5xl: 48px;
+  --text-6xl: 64px;   /* hero stat / timer */
+
+  --lh-tight:   1.05;
+  --lh-snug:    1.2;
+  --lh-normal:  1.45;
+  --lh-relaxed: 1.6;
+
+  --tracking-tight:  -0.02em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.04em;
+  --tracking-caps:   0.08em;  /* uppercase labels */
+
+  /* ========================================================================
+     SPACING — 4px base
+     ======================================================================== */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 80px;
+
+  /* ========================================================================
+     RADII — moderate, premium (not pill-everything)
+     ======================================================================== */
+  --r-xs:   6px;
+  --r-sm:   8px;
+  --r-md:   12px;   /* buttons, inputs */
+  --r-lg:   16px;   /* cards */
+  --r-xl:   20px;   /* sheets, large cards */
+  --r-2xl:  28px;   /* hero panels */
+  --r-pill: 999px;
+
+  /* ========================================================================
+     ELEVATION — dark theme: border carries most weight, shadow is subtle
+     ======================================================================== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.6);
+  --glow-volt: 0 0 0 1px var(--volt-line), 0 8px 28px rgba(214, 255, 63, 0.18);
+
+  /* ========================================================================
+     MOTION
+     ======================================================================== */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+
+  /* Layout */
+  --tap-min: 44px;          /* minimum touch target */
+  --app-max: 440px;         /* mobile content max width */
+  --nav-h: 64px;            /* bottom nav height */
+}
+
+/* ==========================================================================
+   SEMANTIC TYPE CLASSES
+   Use these in markup rather than re-declaring sizes.
+   ========================================================================== */
+.t-display {
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--text-4xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-1);
+}
+.t-h1 {
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--text-2xl);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-snug);
+  color: var(--fg-1);
+}
+.t-h2 {
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--text-xl);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-snug);
+  color: var(--fg-1);
+}
+.t-h3 {
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--text-lg);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+}
+.t-body {
+  font-family: var(--font-sans);
+  font-weight: var(--w-regular);
+  font-size: var(--text-md);
+  line-height: var(--lh-normal);
+  color: var(--fg-2);
+}
+.t-body-strong {
+  font-family: var(--font-sans);
+  font-weight: var(--w-medium);
+  font-size: var(--text-md);
+  line-height: var(--lh-normal);
+  color: var(--fg-1);
+}
+.t-small {
+  font-family: var(--font-sans);
+  font-weight: var(--w-regular);
+  font-size: var(--text-sm);
+  line-height: var(--lh-normal);
+  color: var(--fg-2);
+}
+.t-caption {
+  font-family: var(--font-sans);
+  font-weight: var(--w-regular);
+  font-size: var(--text-xs);
+  line-height: var(--lh-normal);
+  color: var(--fg-3);
+}
+/* Uppercase tracked label — section heads, set-type tags */
+.t-label {
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--text-2xs);
+  line-height: 1;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+/* Numeric — weights, reps, timers, stats. Tabular + mono. */
+.t-num {
+  font-family: var(--font-mono);
+  font-weight: var(--w-medium);
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: var(--tracking-snug);
+  color: var(--fg-1);
+}
+.t-stat {
+  font-family: var(--font-mono);
+  font-weight: var(--w-semi);
+  font-size: var(--text-3xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  font-feature-settings: "tnum" 1, "zero" 1;
+  color: var(--fg-1);
+}
+.t-timer {
+  font-family: var(--font-mono);
+  font-weight: var(--w-semi);
+  font-size: var(--text-6xl);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+  font-feature-settings: "tnum" 1, "zero" 1;
+  color: var(--fg-1);
+}

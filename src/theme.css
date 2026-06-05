@@ -1,0 +1,118 @@
+/* ==========================================================================
+   RACK — Tailwind v4 theme (CSS-first, single source of truth)
+   Vendored from the Rack design system handoff (handoff/theme.css).
+   The @theme block defines every design token ONCE; Tailwind generates both
+   utilities (bg-surface-1, text-fg-2, font-mono, rounded-lg, shadow-glow ...)
+   and CSS variables (var(--color-surface-1) ...). Do not re-declare hexes
+   elsewhere — change a value here and the whole app updates.
+   ========================================================================== */
+
+/* ---- Fonts (self-hosted from /public/fonts) ---------------------------
+   NOTE: Geist-Regular (400) and Geist-SemiBold (600) are pending delivery;
+   until their woff2 land in /public/fonts they fall back to the system sans. */
+@font-face { font-family:"Geist"; font-weight:400; font-style:normal; font-display:swap; src:url("/fonts/Geist-Regular.woff2") format("woff2"); }
+@font-face { font-family:"Geist"; font-weight:500; font-style:normal; font-display:swap; src:url("/fonts/Geist-Medium.woff2") format("woff2"); }
+@font-face { font-family:"Geist"; font-weight:600; font-style:normal; font-display:swap; src:url("/fonts/Geist-SemiBold.woff2") format("woff2"); }
+@font-face { font-family:"Geist"; font-weight:700; font-style:normal; font-display:swap; src:url("/fonts/Geist-Bold.woff2") format("woff2"); }
+@font-face { font-family:"Geist Mono"; font-weight:400; font-style:normal; font-display:swap; src:url("/fonts/GeistMono-Regular.woff2") format("woff2"); }
+@font-face { font-family:"Geist Mono"; font-weight:500; font-style:normal; font-display:swap; src:url("/fonts/GeistMono-Medium.woff2") format("woff2"); }
+@font-face { font-family:"Geist Mono"; font-weight:600; font-style:normal; font-display:swap; src:url("/fonts/GeistMono-SemiBold.woff2") format("woff2"); }
+
+@theme {
+  /* Surfaces -> bg-void, bg-bg, bg-surface-1 ... */
+  --color-void:      #060607;
+  --color-bg:        #0B0B0D;
+  --color-surface-1: #141417;
+  --color-surface-2: #1B1B1F;
+  --color-surface-3: #242429;
+  --color-surface-4: #2E2E34;
+
+  /* Foreground -> text-fg-1 ... */
+  --color-fg-1: #F5F5F6;
+  --color-fg-2: #ADADB5;
+  --color-fg-3: #76767F;
+  --color-fg-4: #4D4D55;
+
+  /* Hairlines -> border-line-1 ... (translucent white) */
+  --color-line-1: rgba(255,255,255,0.06);
+  --color-line-2: rgba(255,255,255,0.10);
+  --color-line-3: rgba(255,255,255,0.16);
+
+  /* Accent -> bg-volt, text-volt-dim, bg-volt-ghost ... */
+  --color-volt:        #D6FF3F;
+  --color-volt-bright: #E4FF6B;
+  --color-volt-deep:   #BCE71F;
+  --color-volt-dim:    #9BB82A;
+  --color-volt-ghost:  rgba(214,255,63,0.12);
+  --color-volt-line:   rgba(214,255,63,0.35);
+  --color-on-volt:     #0B0B0D;
+
+  /* Semantic */
+  --color-success: #5CD08A;
+  --color-success-ghost: rgba(92,208,138,0.12);
+  --color-warning: #F0B43C;
+  --color-warning-ghost: rgba(240,180,60,0.12);
+  --color-danger:  #F06A5A;
+  --color-danger-ghost: rgba(240,106,90,0.12);
+  --color-info:    #5AA8F0;
+  --color-info-ghost: rgba(90,168,240,0.12);
+
+  /* Data-viz */
+  --color-data-volt:   #D6FF3F;
+  --color-data-blue:   #5AA8F0;
+  --color-data-violet: #B488F0;
+  --color-data-teal:   #45D0C0;
+  --color-data-amber:  #F0B43C;
+
+  /* Fonts -> font-sans, font-mono */
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale -> text-2xs ... text-6xl (override defaults to match Rack) */
+  --text-3xs: 10px;
+  --text-2xs: 11px;
+  --text-xs:  12px;
+  --text-sm:  13px;
+  --text-md:  15px;
+  --text-lg:  17px;
+  --text-xl:  20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 38px;
+  --text-5xl: 48px;
+  --text-6xl: 64px;
+
+  /* Radii -> rounded-xs ... rounded-2xl (rounded-full for pills) */
+  --radius-xs:  6px;
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --radius-2xl: 28px;
+
+  /* Shadows -> shadow-sm/md/lg, shadow-glow */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.45);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.55);
+  --shadow-glow: 0 0 0 1px rgba(214,255,63,0.35), 0 8px 28px rgba(214,255,63,0.18);
+
+  /* Easings -> ease-out-rack, etc (optional) */
+  --ease-out-rack: cubic-bezier(0.22,1,0.36,1);
+  --ease-spring:   cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ---- Base + semantic type classes (use in JSX or as @apply targets) --- */
+body {
+  background: var(--color-bg);
+  color: var(--color-fg-1);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.t-h1   { font-weight:600; font-size:var(--text-2xl); line-height:1.2; letter-spacing:-0.01em; color:var(--color-fg-1); }
+.t-h2   { font-weight:600; font-size:var(--text-xl); line-height:1.2; letter-spacing:-0.01em; color:var(--color-fg-1); }
+.t-h3   { font-weight:600; font-size:var(--text-lg); line-height:1.2; color:var(--color-fg-1); }
+.t-body { font-weight:400; font-size:var(--text-md); line-height:1.45; color:var(--color-fg-2); }
+.t-label{ font-weight:600; font-size:var(--text-2xs); letter-spacing:0.08em; text-transform:uppercase; color:var(--color-fg-3); }
+/* Numerals: weights, reps, timers — always mono + tabular */
+.t-num  { font-family:var(--font-mono); font-weight:600; font-feature-settings:"tnum" 1,"zero" 1; letter-spacing:-0.01em; color:var(--color-fg-1); }

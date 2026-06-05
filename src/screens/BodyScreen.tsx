@@ -108,17 +108,17 @@ export function BodyScreen() {
         {latest && (
           <div className="grid grid-cols-2 gap-2">
             <Card className="p-4">
-              <div className="text-xs text-faint">Latest weight</div>
+              <div className="text-xs text-fg-3">Latest weight</div>
               <div className="text-2xl font-bold tabular-nums">
                 {displayWeight(latest.weightKg, units)}{' '}
-                <span className="text-sm text-muted font-normal">{unitLabel(units)}</span>
+                <span className="text-sm text-fg-2 font-normal">{unitLabel(units)}</span>
               </div>
             </Card>
             <Card className="p-4">
-              <div className="text-xs text-faint">Latest waist</div>
+              <div className="text-xs text-fg-3">Latest waist</div>
               <div className="text-2xl font-bold tabular-nums">
                 {latest.waistCm != null ? num(latest.waistCm) : '—'}{' '}
-                <span className="text-sm text-muted font-normal">cm</span>
+                <span className="text-sm text-fg-2 font-normal">cm</span>
               </div>
             </Card>
           </div>
@@ -136,7 +136,7 @@ export function BodyScreen() {
 
         <Card className="p-3 pt-4">
           {chartData.length === 0 ? (
-            <p className="text-center text-muted py-16 text-sm">
+            <p className="text-center text-fg-2 py-16 text-sm">
               No {view} entries yet.
             </p>
           ) : (
@@ -146,10 +146,10 @@ export function BodyScreen() {
                   data={chartData as Record<string, number | string>[]}
                   margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
                 >
-                  <CartesianGrid stroke="#2a2a3a" vertical={false} />
-                  <XAxis dataKey="label" stroke="#6b6b80" fontSize={11} tickLine={false} minTickGap={24} />
+                  <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                  <XAxis dataKey="label" stroke="#76767F" fontSize={11} tickLine={false} minTickGap={24} />
                   <YAxis
-                    stroke="#6b6b80"
+                    stroke="#76767F"
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
@@ -158,27 +158,27 @@ export function BodyScreen() {
                   />
                   <Tooltip
                     contentStyle={{
-                      background: '#15151f',
-                      border: '1px solid #2a2a3a',
+                      background: '#141417',
+                      border: '1px solid rgba(255,255,255,0.06)',
                       borderRadius: 12,
                       fontSize: 13,
                     }}
-                    labelStyle={{ color: '#9a9aae' }}
+                    labelStyle={{ color: '#ADADB5' }}
                   />
                   {view === 'weight' && (
                     <Line
                       type="monotone"
                       dataKey="raw"
-                      stroke="#3a3a4f"
+                      stroke="#4D4D55"
                       strokeWidth={1}
-                      dot={{ r: 1.5, fill: '#3a3a4f' }}
+                      dot={{ r: 1.5, fill: '#4D4D55' }}
                       isAnimationActive={false}
                     />
                   )}
                   <Line
                     type="monotone"
                     dataKey={lineKey}
-                    stroke={view === 'weight' ? '#b6f43a' : '#38e0d0'}
+                    stroke={view === 'weight' ? '#5AA8F0' : '#45D0C0'}
                     strokeWidth={2.5}
                     dot={false}
                     isAnimationActive={false}
@@ -190,7 +190,7 @@ export function BodyScreen() {
         </Card>
 
         <div>
-          <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">
+          <h2 className="text-sm font-semibold text-fg-2 uppercase tracking-wider mb-2">
             Entries
           </h2>
           {metrics.length === 0 ? (

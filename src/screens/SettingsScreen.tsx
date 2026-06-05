@@ -99,7 +99,7 @@ export function SettingsScreen() {
                 step={15}
                 onChange={(v) => void updateSettings({ defaultRestSeconds: v })}
               />
-              <span className="text-sm text-faint w-12 tabular-nums">
+              <span className="text-sm text-fg-3 w-12 tabular-nums">
                 {Math.floor(settings.defaultRestSeconds / 60)}:
                 {String(settings.defaultRestSeconds % 60).padStart(2, '0')}
               </span>
@@ -118,20 +118,20 @@ export function SettingsScreen() {
         </Section>
 
         <Section title="Plate inventory (per plate, kg)">
-          <p className="text-xs text-faint -mt-1">
+          <p className="text-xs text-fg-3 -mt-1">
             Used by the plate calculator to work out what to load per side.
           </p>
           <div className="flex flex-wrap gap-2">
             {settings.plateInventoryKg.map((kg) => (
               <span
                 key={kg}
-                className="inline-flex items-center gap-1.5 bg-ink-700 rounded-lg pl-3 pr-1.5 py-1.5 text-sm font-medium"
+                className="inline-flex items-center gap-1.5 bg-surface-3 rounded-lg pl-3 pr-1.5 py-1.5 text-sm font-medium"
               >
                 {num(kg)}
                 <button
                   onClick={() => removePlate(kg)}
                   aria-label={`Remove ${kg}kg plate`}
-                  className="h-5 w-5 grid place-items-center rounded-md bg-ink-600 active:bg-ink-500"
+                  className="h-5 w-5 grid place-items-center rounded-md bg-surface-4 active:bg-surface-4"
                 >
                   <IconX size={13} />
                 </button>
@@ -153,7 +153,7 @@ export function SettingsScreen() {
         </Section>
 
         <Section title="Your data">
-          <p className="text-xs text-faint -mt-1">
+          <p className="text-xs text-fg-3 -mt-1">
             Everything is stored only on this device. Export a backup regularly,
             and use it to move your history to another device.
           </p>
@@ -174,7 +174,7 @@ export function SettingsScreen() {
         </Section>
 
         <Section title="About">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-fg-2">
             Ironlog is a local-first, offline workout tracker. No account, no
             cloud, no tracking. Version 1.0.
           </p>
@@ -197,8 +197,8 @@ export function SettingsScreen() {
           </div>
         }
       >
-        <p className="text-sm text-muted">
-          <strong className="text-fg">Merge</strong> adds and updates records from
+        <p className="text-sm text-fg-2">
+          <strong className="text-fg-1">Merge</strong> adds and updates records from
           the file, keeping what you already have.
           <br />
           <br />
@@ -210,7 +210,7 @@ export function SettingsScreen() {
       {/* Import result */}
       <Sheet open={result !== null} onClose={() => setResult(null)} title="Import complete">
         {result && (
-          <div className="space-y-1 text-sm text-muted">
+          <div className="space-y-1 text-sm text-fg-2">
             <p>Imported successfully:</p>
             <ul className="list-disc pl-5 mt-2 space-y-0.5">
               <li>{result.exercises} exercises</li>
@@ -231,7 +231,7 @@ export function SettingsScreen() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Card className="p-4 space-y-3">
-      <h2 className="text-sm font-semibold text-muted uppercase tracking-wider">{title}</h2>
+      <h2 className="text-sm font-semibold text-fg-2 uppercase tracking-wider">{title}</h2>
       {children}
     </Card>
   )

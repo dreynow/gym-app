@@ -8,10 +8,10 @@ import { Button, Field, Sheet, TextInput } from './ui'
 function plateColor(kg: number): string {
   if (kg >= 25) return 'bg-danger/80 text-white'
   if (kg >= 20) return 'bg-blue-500/80 text-white'
-  if (kg >= 15) return 'bg-yellow-500/80 text-ink-950'
+  if (kg >= 15) return 'bg-yellow-500/80 text-on-volt'
   if (kg >= 10) return 'bg-green-500/80 text-white'
-  if (kg >= 5) return 'bg-ink-500 text-fg'
-  return 'bg-ink-600 text-fg'
+  if (kg >= 5) return 'bg-surface-4 text-fg-1'
+  return 'bg-surface-4 text-fg-1'
 }
 
 export function PlateCalculator({
@@ -66,10 +66,10 @@ export function PlateCalculator({
           </Field>
         </div>
 
-        <div className="rounded-2xl bg-ink-800 p-4">
-          <p className="text-xs text-muted mb-3 text-center">Load per side</p>
+        <div className="rounded-2xl bg-surface-2 p-4">
+          <p className="text-xs text-fg-2 mb-3 text-center">Load per side</p>
           {grouped.length === 0 ? (
-            <p className="text-center text-muted py-6">
+            <p className="text-center text-fg-2 py-6">
               {effectiveTarget <= bar
                 ? 'Just the bar, no plates needed.'
                 : 'Enter a weight above.'}
@@ -96,7 +96,7 @@ export function PlateCalculator({
               {grouped.map(([kg, count]) => (
                 <span
                   key={kg}
-                  className="text-sm font-medium px-2.5 py-1 rounded-lg bg-ink-700"
+                  className="text-sm font-medium px-2.5 py-1 rounded-lg bg-surface-3"
                 >
                   {count} × {num(kg)}kg
                 </span>
@@ -106,11 +106,11 @@ export function PlateCalculator({
         </div>
 
         <div className="flex justify-between text-sm">
-          <span className="text-muted">Total on bar</span>
+          <span className="text-fg-2">Total on bar</span>
           <span className="font-semibold tabular-nums">{num(layout.achievableKg)} kg</span>
         </div>
         {layout.remainderKg > 0 && (
-          <p className="text-xs text-warn">
+          <p className="text-xs text-warning">
             Can't make exact weight with your plates. Off by{' '}
             {num(layout.remainderKg * 2)} kg total. Adjust plates in Settings.
           </p>

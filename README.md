@@ -1,4 +1,4 @@
-# Ironlog — Personal Workout Tracker
+# Rack — Personal Workout Tracker
 
 A local-first, offline-first strength training tracker, modelled on the fast
 logging loop of Hevy but kept lean and single user. No account, no backend, no
@@ -16,7 +16,7 @@ installs as a PWA so it works at the gym with no signal.
 3. **Beat your last session** — every set shows the matching set from the last
    time you did that exercise, inline, so you always know what to beat.
 4. **Rest timer** — auto-starts when you tick a set done, with one-tap ±15s and
-   skip, a draining progress bar, and a buzz when it ends.
+   skip, a conic progress ring, and a buzz when it ends.
 5. **Plate calculator** — enter a target and bar weight, see the plates to load
    per side (inventory configurable in Settings).
 6. **Exercise library** — searchable, filterable by muscle group, with custom
@@ -41,10 +41,21 @@ in kilograms internally; switching to pounds only changes the display.
 ## Tech
 
 React + TypeScript + Vite, Tailwind CSS v4, Dexie (IndexedDB), `vite-plugin-pwa`
-for offline/installability, and Recharts for charts. Navigation is a tiny
-built-in hash router (no router dependency). State for the active workout lives
-in a React context; everything else reads IndexedDB reactively via Dexie live
-queries.
+for offline/installability, Recharts for charts, and `lucide-react` for icons.
+Navigation is a tiny built-in hash router (no router dependency). State for the
+active workout lives in a React context; everything else reads IndexedDB
+reactively via Dexie live queries.
+
+## Design system (Rack)
+
+The UI follows the **Rack** design system: dark, premium, athletic, with a
+single rationed volt-lime accent on a charcoal surface ladder, Geist Sans for UI
+and Geist Mono for all numerals. The tokens are vendored as a Tailwind v4
+CSS-first theme at `src/theme.css` (imported by `src/index.css`); never
+re-declare hexes in components, consume the tokens (`bg-surface-1`, `text-fg-2`,
+`bg-volt`, `font-mono`, `rounded-lg`, `shadow-glow`, ...). The original handoff
+docs are kept under `design-system/` for provenance, and the Geist `.woff2`
+fonts are served from `public/fonts/`. See `design-system/BUILD.md`.
 
 ## Run it
 

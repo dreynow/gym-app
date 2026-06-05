@@ -65,7 +65,7 @@ export function WorkoutScreen() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-ink-900/95 backdrop-blur border-b border-ink-800 safe-top">
+      <header className="sticky top-0 z-30 bg-bg/95 backdrop-blur border-b border-line-1 safe-top">
         <div className="mx-auto max-w-md flex items-center gap-2 px-4 h-14">
           <IconButton label="Minimise" onClick={() => navigate({ name: 'routines' })} className="-ml-2">
             <IconX size={22} />
@@ -74,7 +74,7 @@ export function WorkoutScreen() {
             <h1 className="text-base font-bold leading-tight truncate">
               {session.routineName ?? 'Workout'}
             </h1>
-            <p className="text-xs text-volt-400 font-mono tabular-nums">
+            <p className="text-xs text-volt-dim font-mono tabular-nums">
               {formatDuration(elapsedSeconds)} · {loggedSets} sets
             </p>
           </div>

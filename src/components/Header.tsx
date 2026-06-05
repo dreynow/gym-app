@@ -17,7 +17,7 @@ export function Header({
   action?: ReactNode
 }) {
   return (
-    <header className="sticky top-0 z-20 bg-ink-900/90 backdrop-blur border-b border-ink-800 safe-top">
+    <header className="sticky top-0 z-20 bg-bg/90 backdrop-blur border-b border-line-1 safe-top">
       <div className="mx-auto max-w-md flex items-center gap-2 px-4 h-14">
         {back && (
           <IconButton label="Back" onClick={() => navigate(back)} className="-ml-2">
@@ -26,7 +26,7 @@ export function Header({
         )}
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold leading-tight truncate">{title}</h1>
-          {subtitle && <p className="text-xs text-muted truncate">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-fg-2 truncate">{subtitle}</p>}
         </div>
         {action}
       </div>

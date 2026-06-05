@@ -49,7 +49,7 @@ export function RoutinesScreen() {
   return (
     <>
       <Header
-        title="Train"
+        title="Rack"
         subtitle="Start a workout or manage routines"
         action={
           <IconButton label="Settings" onClick={() => navigate({ name: 'settings' })}>
@@ -64,12 +64,12 @@ export function RoutinesScreen() {
         </Button>
 
         <div className="flex items-center justify-between pt-1">
-          <h2 className="text-sm font-semibold text-muted uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-fg-2 uppercase tracking-wider">
             Routines
           </h2>
           <button
             onClick={createRoutine}
-            className="inline-flex items-center gap-1 text-sm text-volt-400 font-medium"
+            className="inline-flex items-center gap-1 text-sm text-volt-dim font-medium"
           >
             <IconPlus size={16} /> New
           </button>
@@ -98,7 +98,7 @@ export function RoutinesScreen() {
                 <Card key={routine.id} className="overflow-hidden">
                   <button
                     onClick={() => navigate({ name: 'routine', id: routine.id })}
-                    className="w-full text-left px-4 pt-4 pb-3 active:bg-ink-800 transition-colors"
+                    className="w-full text-left px-4 pt-4 pb-3 active:bg-surface-2 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -109,16 +109,16 @@ export function RoutinesScreen() {
                           </Pill>
                         )}
                       </div>
-                      <span className="text-faint flex items-center gap-1 text-sm shrink-0">
+                      <span className="text-fg-3 flex items-center gap-1 text-sm shrink-0">
                         <IconEdit size={15} /> Edit
                       </span>
                     </div>
-                    <p className="text-sm text-muted mt-2 line-clamp-2">
+                    <p className="text-sm text-fg-2 mt-2 line-clamp-2">
                       {names.length > 0
                         ? names.join(', ')
                         : 'No exercises yet, tap to add some.'}
                     </p>
-                    <p className="text-xs text-faint mt-1">
+                    <p className="text-xs text-fg-3 mt-1">
                       {routine.items.length}{' '}
                       {routine.items.length === 1 ? 'exercise' : 'exercises'}
                     </p>
@@ -169,7 +169,7 @@ export function RoutinesScreen() {
           </div>
         }
       >
-        <p className="text-muted text-sm">
+        <p className="text-fg-2 text-sm">
           You already have a workout running. Resume it, or discard it to start a
           new one.
         </p>

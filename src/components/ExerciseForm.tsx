@@ -121,7 +121,7 @@ export function ExerciseForm({
             type="checkbox"
             checked={usesBarbell}
             onChange={(e) => setUsesBarbell(e.target.checked)}
-            className="h-6 w-6 accent-volt-500"
+            className="h-6 w-6 accent-volt"
           />
         </label>
       </div>

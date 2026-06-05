@@ -79,7 +79,7 @@ export function RoutineEditScreen({ id }: { id: string }) {
     return (
       <>
         <Header title="Routine" back={{ name: 'routines' }} />
-        <p className="p-6 text-muted">This routine no longer exists.</p>
+        <p className="p-6 text-fg-2">This routine no longer exists.</p>
       </>
     )
   }
@@ -115,7 +115,7 @@ export function RoutineEditScreen({ id }: { id: string }) {
         </div>
 
         <div>
-          <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">
+          <h2 className="text-sm font-semibold text-fg-2 uppercase tracking-wider mb-2">
             Exercises
           </h2>
           <div className="space-y-3">
@@ -158,7 +158,7 @@ export function RoutineEditScreen({ id }: { id: string }) {
                   </div>
 
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-sm text-muted">Sets</span>
+                    <span className="text-sm text-fg-2">Sets</span>
                     <Stepper
                       value={item.targetSets}
                       min={1}
@@ -167,7 +167,7 @@ export function RoutineEditScreen({ id }: { id: string }) {
                     />
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm text-muted">Rep range</span>
+                    <span className="text-sm text-fg-2">Rep range</span>
                     <div className="flex items-center gap-2">
                       <Stepper
                         value={item.repLow}
@@ -175,7 +175,7 @@ export function RoutineEditScreen({ id }: { id: string }) {
                         max={item.repHigh}
                         onChange={(v) => patchItem(index, { repLow: v })}
                       />
-                      <span className="text-faint">to</span>
+                      <span className="text-fg-3">to</span>
                       <Stepper
                         value={item.repHigh}
                         min={item.repLow}
