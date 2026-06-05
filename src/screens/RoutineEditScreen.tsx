@@ -7,6 +7,7 @@ import { navigate } from '../lib/router'
 import { Header } from '../components/Header'
 import { Button, Card, IconButton, Spinner, Stepper, TextInput } from '../components/ui'
 import { Field } from '../components/ui'
+import { useConfirm } from '../components/ConfirmDialog'
 import { ExercisePicker } from '../components/ExercisePicker'
 import {
   IconChevronLeft,
@@ -16,6 +17,7 @@ import {
 } from '../components/Icons'
 
 export function RoutineEditScreen({ id }: { id: string }) {
+  const confirm = useConfirm()
   const exMap = useExerciseMap()
   const [routine, setRoutine] = useState<Routine | null | undefined>(undefined)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -69,7 +71,14 @@ export function RoutineEditScreen({ id }: { id: string }) {
 
   async function remove() {
     if (!routine) return
-    if (!confirm(`Delete "${routine.name}"? This cannot be undone.`)) return
+    if (
+      !(await confirm({
+        message: `Delete "${routine.name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        danger: true,
+      }))
+    )
+      return
     await deleteRoutine(routine.id)
     navigate({ name: 'routines' })
   }

@@ -10,6 +10,7 @@ import { displayWeight, formatDuration, num, relativeDate, unitLabel } from '../
 import { kgToLb, lbToKg } from '../lib/calc'
 import { SET_TYPE_LABEL, SET_TYPES, SET_TYPE_SHORT } from '../lib/labels'
 import { Button, Card, cx, IconButton, Pill, Sheet, Stepper } from './ui'
+import { useConfirm } from './ConfirmDialog'
 import { PlateCalculator } from './PlateCalculator'
 import {
   IconCalculator,
@@ -37,6 +38,7 @@ const SET_BADGE_TONE: Record<SetType, string> = {
 
 export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateISO }: Props) {
   const { updateSet, addSet, removeSet, toggleSetDone, removeEntry, setEntryNotes } = useWorkout()
+  const confirm = useConfirm()
   const settings = useSettings()
   const last = useLastSession(entry.exerciseId, sessionDateISO)
   const priorBests = useAllTimeBests(entry.exerciseId, sessionDateISO)
@@ -264,8 +266,12 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
           )}
           <button
             onClick={() => {
-              if (confirm('Remove this exercise from the workout?')) removeEntry(entryIndex)
               setMenuOpen(false)
+              void confirm({
+                message: 'Remove this exercise from the workout?',
+                confirmLabel: 'Remove',
+                danger: true,
+              }).then((ok) => ok && removeEntry(entryIndex))
             }}
             className="w-full flex items-center gap-3 px-1 py-2 text-left text-danger"
           >

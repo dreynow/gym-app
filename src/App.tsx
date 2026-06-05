@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext'
+import { ConfirmProvider } from './components/ConfirmDialog'
 import { useRoute } from './lib/router'
 import { BottomNav } from './components/BottomNav'
 import { ResumeBanner } from './components/ResumeBanner'
@@ -10,6 +11,7 @@ import { WorkoutScreen } from './screens/WorkoutScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
 import { SessionDetailScreen } from './screens/SessionDetailScreen'
 import { ExercisesScreen } from './screens/ExercisesScreen'
+import { MealsScreen } from './screens/MealsScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { CoachScreen } from './screens/CoachScreen'
 
@@ -55,6 +57,8 @@ function Router() {
       )
     case 'exercises':
       return <ExercisesScreen />
+    case 'meals':
+      return <MealsScreen />
     case 'settings':
       return <SettingsScreen />
     case 'coach':
@@ -86,8 +90,10 @@ function Shell() {
 
 export function App() {
   return (
-    <WorkoutProvider>
-      <Shell />
-    </WorkoutProvider>
+    <ConfirmProvider>
+      <WorkoutProvider>
+        <Shell />
+      </WorkoutProvider>
+    </ConfirmProvider>
   )
 }

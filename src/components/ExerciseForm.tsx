@@ -8,6 +8,7 @@ import {
   MUSCLE_LABEL,
 } from '../lib/labels'
 import { Button, Field, Sheet, TextInput } from './ui'
+import { useConfirm } from './ConfirmDialog'
 import { Select } from './Select'
 
 /** Create or edit an exercise. Pass `existing` to edit; omit to create new.
@@ -25,6 +26,7 @@ export function ExerciseForm({
   initialName?: string
   onSaved?: (exercise: Exercise) => void
 }) {
+  const confirm = useConfirm()
   const [name, setName] = useState('')
   const [muscle, setMuscle] = useState<MuscleGroup>('fullbody')
   const [equipment, setEquipment] = useState<Equipment>('other')
@@ -58,7 +60,12 @@ export function ExerciseForm({
 
   async function archive() {
     if (!existing) return
-    if (!confirm(`Archive "${existing.name}"? It stays in past workouts but is hidden from pickers.`))
+    if (
+      !(await confirm({
+        message: `Archive "${existing.name}"? It stays in past workouts but is hidden from pickers.`,
+        confirmLabel: 'Archive',
+      }))
+    )
       return
     await archiveExercise(existing.id)
     onClose()

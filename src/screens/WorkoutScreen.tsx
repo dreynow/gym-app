@@ -8,6 +8,7 @@ import { Button, EmptyState, IconButton, Sheet } from '../components/ui'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimerBar } from '../components/RestTimerBar'
 import { WorkoutExerciseCard } from '../components/WorkoutExerciseCard'
+import { useConfirm } from '../components/ConfirmDialog'
 import { IconDumbbell, IconMore, IconPlus, IconX } from '../components/Icons'
 
 export function WorkoutScreen() {
@@ -19,6 +20,7 @@ export function WorkoutScreen() {
     discardWorkout,
   } = useWorkout()
   const exMap = useExerciseMap()
+  const confirm = useConfirm()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -48,7 +50,8 @@ export function WorkoutScreen() {
 
   async function finish() {
     if (loggedSets === 0) {
-      if (!confirm('No sets logged yet. Finish anyway?')) return
+      if (!(await confirm({ message: 'No sets logged yet. Finish anyway?', confirmLabel: 'Finish' })))
+        return
     }
     const result = await finishWorkout()
     setMenuOpen(false)
@@ -57,7 +60,13 @@ export function WorkoutScreen() {
   }
 
   async function discard() {
-    if (confirm('Discard this workout? Logged sets will be lost.')) {
+    if (
+      await confirm({
+        message: 'Discard this workout? Logged sets will be lost.',
+        confirmLabel: 'Discard',
+        danger: true,
+      })
+    ) {
       await discardWorkout()
       navigate({ name: 'routines' })
     }

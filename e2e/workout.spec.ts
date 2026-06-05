@@ -68,6 +68,7 @@ test.describe('Active workout: the core logging loop', () => {
     await logSet(page, 'Overhead Press', 1, 40, 8)
     await page.getByRole('button', { name: 'Workout options' }).click()
     await page.getByRole('button', { name: 'Discard workout' }).click()
+    await page.getByRole('button', { name: 'Discard', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Start Empty Workout' })).toBeVisible()
     await navTo(page, 'History')
     await expect(page.getByText('No workouts logged yet')).toBeVisible()
@@ -91,6 +92,7 @@ test.describe('History', () => {
     await expect(page).toHaveURL(/#\/session\//)
 
     await page.getByRole('button', { name: 'Delete workout' }).click()
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await expect(page).toHaveURL(/#\/history/)
     await expect(page.getByText('No workouts logged yet')).toBeVisible()
   })

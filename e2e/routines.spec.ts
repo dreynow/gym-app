@@ -38,6 +38,7 @@ test.describe('Routines (programs) are fully dynamic', () => {
     await page.getByRole('button', { name: 'New', exact: true }).click()
     await page.getByLabel('Routine name').fill('Throwaway Routine')
     await page.getByRole('button', { name: 'Delete routine' }).click()
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await expect(page).toHaveURL(/#\/$|\/$/)
     await expect(page.getByRole('heading', { name: 'Throwaway Routine' })).toHaveCount(0)
   })

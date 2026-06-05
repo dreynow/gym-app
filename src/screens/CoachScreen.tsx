@@ -12,6 +12,7 @@ import {
 } from '../lib/coach'
 import { Header } from '../components/Header'
 import { Button, cx, EmptyState, IconButton } from '../components/ui'
+import { useConfirm } from '../components/ConfirmDialog'
 import { IconSend, IconSparkles, IconTrash } from '../components/Icons'
 
 const SUGGESTIONS = [
@@ -22,6 +23,7 @@ const SUGGESTIONS = [
 
 export function CoachScreen() {
   const settings = useSettings()
+  const confirm = useConfirm()
   const messages = useLiveQuery(() => db.coachMessages.orderBy('createdAt').toArray(), [], [])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState<string | null>(null)
@@ -66,7 +68,8 @@ export function CoachScreen() {
   }
 
   async function clear() {
-    if (!confirm('Clear this conversation?')) return
+    if (!(await confirm({ message: 'Clear this conversation?', confirmLabel: 'Clear', danger: true })))
+      return
     await clearCoachMessages()
     setError(null)
   }

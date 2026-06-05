@@ -17,10 +17,12 @@ import { PR_LABEL } from '../lib/pr'
 import { SET_TYPE_LABEL } from '../lib/labels'
 import { Header } from '../components/Header'
 import { Card, cx, IconButton, Pill, Spinner } from '../components/ui'
+import { useConfirm } from '../components/ConfirmDialog'
 import { IconFlame, IconHeart, IconTrash, IconTrophy } from '../components/Icons'
 
 export function SessionDetailScreen({ id }: { id: string }) {
   const settings = useSettings()
+  const confirm = useConfirm()
   const exMap = useExerciseMap()
   const session = useLiveQuery(() => db.sessions.get(id), [id])
   const prs = useLiveQuery(
@@ -52,7 +54,14 @@ export function SessionDetailScreen({ id }: { id: string }) {
   }
 
   async function remove() {
-    if (!confirm('Delete this workout permanently?')) return
+    if (
+      !(await confirm({
+        message: 'Delete this workout permanently?',
+        confirmLabel: 'Delete',
+        danger: true,
+      }))
+    )
+      return
     await deleteSession(id)
     navigate({ name: 'history' })
   }
