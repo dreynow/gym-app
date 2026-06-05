@@ -384,9 +384,11 @@ export function SettingsScreen() {
               onChange={(e) => setCloudEndpoint(e.target.value)}
             />
           </Field>
-          <Field label="Passphrase">
+          <div>
+            <span className="block text-sm text-fg-2 mb-1.5">Passphrase</span>
             <div className="relative">
               <TextInput
+                aria-label="Passphrase"
                 type={showPass ? 'text' : 'password'}
                 autoComplete="off"
                 value={cloudPass}
@@ -403,7 +405,7 @@ export function SettingsScreen() {
                 {showPass ? <IconEyeOff size={18} /> : <IconEye size={18} />}
               </button>
             </div>
-          </Field>
+          </div>
           <div className="flex gap-2">
             <Button
               variant="primary"

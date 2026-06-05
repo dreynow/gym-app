@@ -35,7 +35,7 @@ test.describe('Encrypted cloud backup', () => {
     // Configure cloud backup and back up.
     await openSettings(page)
     await page.getByLabel('Backup endpoint URL').fill('https://backup.test/')
-    await page.getByLabel('Passphrase').fill('roundtrip-pass')
+    await page.getByLabel('Passphrase', { exact: true }).fill('roundtrip-pass')
     await page.getByRole('button', { name: 'Back up now' }).click()
     await expect(page.getByText('Backed up to the cloud.')).toBeVisible()
 
