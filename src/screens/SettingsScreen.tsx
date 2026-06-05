@@ -38,6 +38,8 @@ import {
 import {
   IconCheck,
   IconDownload,
+  IconEye,
+  IconEyeOff,
   IconHeart,
   IconLibrary,
   IconPlus,
@@ -67,6 +69,7 @@ export function SettingsScreen() {
   const [keySaved, setKeySaved] = useState(false)
   const [cloudEndpoint, setCloudEndpoint] = useState('')
   const [cloudPass, setCloudPass] = useState('')
+  const [showPass, setShowPass] = useState(false)
   const [cloudBusy, setCloudBusy] = useState<'idle' | 'backup' | 'restore'>('idle')
   const [cloudMsg, setCloudMsg] = useState<string | null>(null)
   const [cloudErr, setCloudErr] = useState<string | null>(null)
@@ -382,13 +385,24 @@ export function SettingsScreen() {
             />
           </Field>
           <Field label="Passphrase">
-            <TextInput
-              type="password"
-              autoComplete="off"
-              value={cloudPass}
-              placeholder="A phrase only you know"
-              onChange={(e) => setCloudPass(e.target.value)}
-            />
+            <div className="relative">
+              <TextInput
+                type={showPass ? 'text' : 'password'}
+                autoComplete="off"
+                value={cloudPass}
+                placeholder="A phrase only you know"
+                onChange={(e) => setCloudPass(e.target.value)}
+                className="pr-11"
+              />
+              <button
+                type="button"
+                aria-label={showPass ? 'Hide passphrase' : 'Show passphrase'}
+                onClick={() => setShowPass((v) => !v)}
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-fg-3 active:text-fg-1"
+              >
+                {showPass ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+              </button>
+            </div>
           </Field>
           <div className="flex gap-2">
             <Button

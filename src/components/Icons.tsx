@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Download,
   Dumbbell,
+  Eye,
+  EyeOff,
   Flame,
   Heart,
   History,
@@ -65,3 +67,5 @@ export const IconActivity = Activity
 export const IconSparkles = Sparkles
 export const IconSend = Send
 export const IconMeal = Utensils
+export const IconEye = Eye
+export const IconEyeOff = EyeOff
