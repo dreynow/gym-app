@@ -1,49 +1,50 @@
-# Rack cloud backup (your AWS)
+# Rack cloud backup (deployed)
 
-A tiny backend for Rack's encrypted cloud backup: one Lambda + one private S3
-bucket. Rack encrypts everything on your device with your passphrase before it
-is sent, so this server only ever stores opaque ciphertext. It has no idea who
-you are and cannot read your data.
+Encrypted backup endpoint for Rack. Rack encrypts everything on-device with the
+user's passphrase before sending, so this only ever stores opaque ciphertext
+keyed by a passphrase-derived id. It cannot read the data.
 
-## API (what Rack calls)
+## What is deployed (AWS account 280012167843, us-east-1)
 
-`POST <function-url>` with a JSON body:
+| Piece | Name |
+|---|---|
+| Lambda | `rack-backup` (nodejs20.x, `handler.handler`, env `BUCKET`) |
+| IAM role | `rack-backup-lambda-role` (S3 Get/Put/List on the bucket + logs) |
+| S3 bucket | `rack-backup-280012167843` (private, SSE-AES256, public access blocked) |
+| API | API Gateway **HTTP API** `rack-backup` → Lambda proxy, CORS for the app origins |
 
-- Back up: `{ "action": "put", "id": "<derived-id>", "blob": "<ciphertext>" }`
-- Restore: `{ "action": "get", "id": "<derived-id>" }` -> `{ "blob": "<ciphertext>" }` or 404
+**Live endpoint:** `https://xbih5t41wg.execute-api.us-east-1.amazonaws.com`
 
-`id` is a SHA-256 of your passphrase (the server never sees the passphrase).
+### Why API Gateway, not a Lambda Function URL
 
-## Deploy with AWS SAM (recommended)
+This account blocks public (auth `NONE`) Lambda Function URLs via an
+organization guardrail (SCP) — they create fine but return 403 on invoke. An
+HTTP API in front of the Lambda is the public ingress that works. Two gotchas
+hit during deploy, both fixed:
+- API Gateway needs `lambda:InvokeFunction` permission on the function
+  (`apigateway.amazonaws.com`, source `arn:aws:execute-api:...:<api-id>/*/*`).
+- The role needs `s3:ListBucket`, else a GET on a missing key returns 403 (not
+  404) and the handler 500s. The handler also treats 404/NotFound as "no backup".
 
-Requires the AWS SAM CLI and credentials.
+## API
+
+`POST <endpoint>` JSON:
+- Back up: `{ "action": "put", "id": "<hash>", "blob": "<ciphertext>" }`
+- Restore: `{ "action": "get", "id": "<hash>" }` -> `{ "blob": "<ciphertext>" }` or 404 `{ "blob": null }`
+
+## Update the handler code
 
 ```bash
 cd infra/cloud-backup
-sam build
-sam deploy --guided   # accept defaults; allows creating IAM roles
+zip -q /tmp/rack-backup.zip handler.mjs
+aws lambda update-function-code --function-name rack-backup --region us-east-1 \
+  --zip-file fileb:///tmp/rack-backup.zip
 ```
-
-When it finishes, copy the `BackupUrl` output and paste it into Rack:
-**Settings -> Cloud backup -> Backup endpoint URL**, set a passphrase, tap
-**Back up now**.
-
-## Deploy by hand (AWS console)
-
-1. **S3**: create a private bucket (block all public access). Note its name.
-2. **Lambda**: create a function, runtime **Node.js 20.x**. Paste
-   `handler.mjs` as the code (file/handler `handler.handler`). Set env var
-   `BUCKET` to the bucket name. Timeout 15s.
-3. **Permissions**: give the function's role `s3:GetObject` and `s3:PutObject`
-   on `arn:aws:s3:::<bucket>/*`.
-4. **Function URL**: enable one, **Auth type: NONE**, and under CORS allow
-   origin `*`, method `POST`, header `content-type`. Copy the URL.
-5. Paste the URL into Rack as above.
 
 ## Notes
 
-- The Function URL is public but useless without your passphrase: the `id` is a
-  hash of it and the blob is AES-GCM encrypted with a key stretched from it.
-- Use a strong passphrase. If you lose it, the backup cannot be recovered.
-- Cost is effectively nothing for one user (a few KB blob, occasional requests).
-- To wipe a backup, delete `backups/<id>.txt` from the bucket.
+- Public but useless without the passphrase (id is a hash of it; blob is
+  AES-GCM encrypted with a key stretched from it).
+- 50MB blob cap and id-format limit guard against abuse. For a single user this
+  is fine; a shared-secret header or WAF rate limit could be added later.
+- To wipe a backup: `aws s3 rm s3://rack-backup-280012167843/backups/<id>.txt`.

@@ -2,25 +2,22 @@ import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3
 
 // Rack encrypted cloud backup. Stores/returns an opaque, client-encrypted blob
 // keyed by a passphrase-derived id. The server never sees the passphrase or the
-// plaintext. Deploy as a Lambda Function URL (auth NONE) backed by one S3 bucket.
+// plaintext. Deployed as a Lambda Function URL (auth NONE, CORS on the URL)
+// backed by one private S3 bucket. AWS SDK v3 ships in the Node 20 runtime.
 
 const s3 = new S3Client({})
 const BUCKET = process.env.BUCKET
 
-const cors = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'POST, OPTIONS',
-  'access-control-allow-headers': 'content-type',
-}
 const json = (statusCode, obj) => ({
   statusCode,
-  headers: { ...cors, 'content-type': 'application/json' },
+  headers: { 'content-type': 'application/json' },
   body: JSON.stringify(obj),
 })
 
 export const handler = async (event) => {
   const method = event.requestContext?.http?.method
-  if (method === 'OPTIONS') return { statusCode: 204, headers: cors }
+  // CORS preflight: API Gateway adds the CORS headers; just return success.
+  if (method === 'OPTIONS') return { statusCode: 204, body: '' }
   if (method !== 'POST') return json(405, { error: 'POST only' })
 
   let body
@@ -49,7 +46,8 @@ export const handler = async (event) => {
         const obj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key }))
         return json(200, { blob: await obj.Body.transformToString() })
       } catch (e) {
-        if (e?.name === 'NoSuchKey' || e?.$metadata?.httpStatusCode === 404) {
+        const code = e?.$metadata?.httpStatusCode
+        if (e?.name === 'NoSuchKey' || e?.name === 'NotFound' || code === 404) {
           return json(404, { blob: null })
         }
         throw e
