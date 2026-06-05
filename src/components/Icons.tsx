@@ -23,7 +23,9 @@ import {
   Plus,
   Scale,
   Search,
+  Send,
   Settings,
+  Sparkles,
   StickyNote,
   Timer,
   Trash2,
@@ -59,3 +61,5 @@ export const IconMore = MoreHorizontal
 export const IconHeart = Heart
 export const IconFlame = Flame
 export const IconActivity = Activity
+export const IconSparkles = Sparkles
+export const IconSend = Send

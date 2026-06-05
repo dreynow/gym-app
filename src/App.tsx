@@ -11,6 +11,7 @@ import { HistoryScreen } from './screens/HistoryScreen'
 import { SessionDetailScreen } from './screens/SessionDetailScreen'
 import { ExercisesScreen } from './screens/ExercisesScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
+import { CoachScreen } from './screens/CoachScreen'
 
 // Chart screens pull in Recharts; load them on demand to keep first paint fast.
 const ProgressScreen = lazy(() =>
@@ -56,21 +57,24 @@ function Router() {
       return <ExercisesScreen />
     case 'settings':
       return <SettingsScreen />
+    case 'coach':
+      return <CoachScreen />
   }
 }
 
 function Shell() {
   const route = useRoute()
-  // The active-workout screen is full-bleed: no bottom nav, no resume banner.
-  const isWorkout = route.name === 'workout'
+  // The active-workout and coach screens are full-bleed: no bottom nav, no
+  // resume banner (the coach owns the whole viewport for its chat input).
+  const fullBleed = route.name === 'workout' || route.name === 'coach'
   return (
     <div className="min-h-full">
-      <main className={isWorkout ? '' : 'pb-28'}>
+      <main className={fullBleed ? '' : 'pb-28'}>
         <div className="mx-auto max-w-md">
           <Router />
         </div>
       </main>
-      {!isWorkout && (
+      {!fullBleed && (
         <>
           <ResumeBanner />
           <BottomNav />

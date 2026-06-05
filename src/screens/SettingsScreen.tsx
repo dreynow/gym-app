@@ -14,6 +14,8 @@ import {
   type ImportResult,
 } from '../lib/backup'
 import { num } from '../lib/format'
+import { navigate } from '../lib/router'
+import { COACH_MODELS, DEFAULT_COACH_MODEL } from '../lib/coach'
 import {
   isIOS,
   isStandalone,
@@ -36,6 +38,7 @@ import {
   IconDownload,
   IconHeart,
   IconPlus,
+  IconSparkles,
   IconTrash,
   IconUpload,
   IconX,
@@ -56,10 +59,16 @@ export function SettingsScreen() {
   const [removedMsg, setRemovedMsg] = useState<string | null>(null)
   const [healthProgress, setHealthProgress] = useState<number | null>(null)
   const [persisted, setPersisted] = useState<boolean | null>(null)
+  const [keyInput, setKeyInput] = useState('')
+  const [keySaved, setKeySaved] = useState(false)
 
   useEffect(() => {
     void isStoragePersisted().then(setPersisted)
   }, [])
+
+  useEffect(() => {
+    setKeyInput(settings.anthropicApiKey ?? '')
+  }, [settings.anthropicApiKey])
 
   function addPlate() {
     const v = Number(newPlate)
@@ -354,6 +363,62 @@ export function SettingsScreen() {
           >
             <IconTrash size={14} /> Remove imported workouts
           </button>
+        </Section>
+
+        <Section title="AI coach">
+          <p className="text-xs text-fg-3 -mt-1">
+            Chat with a coach that can see your sessions, PRs, and weekly volume.
+            Your Anthropic API key is stored only on this device and used to call
+            Claude directly. Get a key at console.anthropic.com.
+          </p>
+          <Field label="Anthropic API key">
+            <TextInput
+              type="password"
+              autoComplete="off"
+              value={keyInput}
+              placeholder="sk-ant-..."
+              onChange={(e) => {
+                setKeyInput(e.target.value)
+                setKeySaved(false)
+              }}
+            />
+          </Field>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                void updateSettings({ anthropicApiKey: keyInput.trim() || undefined })
+                setKeySaved(true)
+              }}
+            >
+              Save key
+            </Button>
+            {keySaved && <span className="text-xs text-volt-dim">Saved</span>}
+            {settings.anthropicApiKey && (
+              <button
+                type="button"
+                className="text-xs text-fg-3 active:text-fg-2"
+                onClick={() => {
+                  setKeyInput('')
+                  setKeySaved(false)
+                  void updateSettings({ anthropicApiKey: undefined })
+                }}
+              >
+                Remove key
+              </button>
+            )}
+          </div>
+          <Field label="Model">
+            <SegmentedControl<string>
+              value={settings.coachModel || DEFAULT_COACH_MODEL}
+              onChange={(m) => void updateSettings({ coachModel: m })}
+              options={COACH_MODELS.map((m) => ({ value: m.id, label: m.label.split(' ')[0] }))}
+              className="w-full"
+            />
+          </Field>
+          <Button variant="secondary" full onClick={() => navigate({ name: 'coach' })}>
+            <IconSparkles size={18} /> Open coach
+          </Button>
         </Section>
 
         <Section title="About">

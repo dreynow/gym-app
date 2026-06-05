@@ -130,6 +130,18 @@ export interface Settings {
   theme: 'dark' | 'light'
   /** Available plate denominations (per single plate) used by the calculator. */
   plateInventoryKg: number[]
+  /** Anthropic API key for the in-app AI coach. Stored only on this device. */
+  anthropicApiKey?: string
+  /** Claude model id the coach uses. */
+  coachModel?: string
+}
+
+/** One turn in the AI coach conversation, persisted so it survives refreshes. */
+export interface CoachMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  createdAt: string
 }
 
 /** A detected personal record, surfaced as a badge in the UI. */

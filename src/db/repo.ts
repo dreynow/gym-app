@@ -2,6 +2,7 @@ import { db, DEFAULT_SETTINGS, SETTINGS_ID } from './db'
 import { buildSeedExercises, buildSeedRoutines } from './seed'
 import type {
   BodyMetric,
+  CoachMessage,
   Exercise,
   Routine,
   RoutineItem,
@@ -198,6 +199,26 @@ export async function saveBodyMetric(metric: BodyMetric): Promise<void> {
 
 export async function deleteBodyMetric(id: string): Promise<void> {
   await db.bodyMetrics.delete(id)
+}
+
+// ---------- AI coach ----------
+
+export async function addCoachMessage(
+  role: 'user' | 'assistant',
+  content: string,
+): Promise<CoachMessage> {
+  const msg: CoachMessage = {
+    id: uid('msg'),
+    role,
+    content,
+    createdAt: new Date().toISOString(),
+  }
+  await db.coachMessages.add(msg)
+  return msg
+}
+
+export async function clearCoachMessages(): Promise<void> {
+  await db.coachMessages.clear()
 }
 
 // ---------- Apple Health import ----------

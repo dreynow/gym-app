@@ -14,6 +14,7 @@ import {
   IconPlay,
   IconPlus,
   IconSettings,
+  IconSparkles,
 } from '../components/Icons'
 
 export function RoutinesScreen() {
@@ -52,9 +53,14 @@ export function RoutinesScreen() {
         title="Rack"
         subtitle="Start a workout or manage routines"
         action={
-          <IconButton label="Settings" onClick={() => navigate({ name: 'settings' })}>
-            <IconSettings size={22} />
-          </IconButton>
+          <div className="flex items-center gap-1">
+            <IconButton label="AI coach" onClick={() => navigate({ name: 'coach' })}>
+              <IconSparkles size={22} className="text-volt" />
+            </IconButton>
+            <IconButton label="Settings" onClick={() => navigate({ name: 'settings' })}>
+              <IconSettings size={22} />
+            </IconButton>
+          </div>
         }
       />
 
