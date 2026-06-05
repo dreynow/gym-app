@@ -1,0 +1,31 @@
+name: E2E tests
+
+# Runs the Playwright end-to-end suite (real browser, full app) on every push
+# and PR, so regressions in the core logging loop get caught automatically.
+on:
+  push:
+    branches: ['claude/kind-clarke-exE3K']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -29,3 +29,9 @@ pnpm-debug.log*
 node_modules/.tmp
 *.tsbuildinfo
 dev-dist
+
+# playwright e2e
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache

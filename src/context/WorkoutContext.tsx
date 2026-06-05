@@ -246,32 +246,38 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   const toggleSetDone = useCallback(
     (entryIndex: number, setIndex: number, restSeconds: number) => {
-      let nowDone = false
+      // Decide whether this set is becoming "done" from the CURRENT committed
+      // state, before dispatching the update — the setState updater runs later,
+      // so we can't read a flag mutated inside it. (This is what makes the rest
+      // timer reliably start on completion.)
+      const entry = session?.entries[entryIndex]
+      const target = entry?.sets[setIndex]
+      const willBeDone = target ? !target.done : false
+
       mutate((s) => {
         const entries = s.entries.map((e, i) => {
           if (i !== entryIndex) return e
           const sets = e.sets.map((set, j) => {
             if (j !== setIndex) return set
-            nowDone = !set.done
-            if (!nowDone) return { ...set, done: false }
-            // One-tap repeat: if you tick an untouched set done, adopt the
-            // previous set's numbers so identical sets need zero typing.
+            if (set.done) return { ...set, done: false }
+            // One-tap repeat: ticking an untouched set adopts the previous
+            // set's numbers so identical sets need zero typing.
             const prior = e.sets[j - 1]
             const weightKg = set.weightKg ?? prior?.weightKg ?? null
             const reps = set.reps ?? prior?.reps ?? null
             return { ...set, done: true, weightKg, reps }
           })
           // Auto-create the next empty set when completing the last one.
-          if (nowDone && setIndex === e.sets.length - 1) {
+          if (willBeDone && setIndex === e.sets.length - 1) {
             sets.push(emptySet(sets[sets.length - 1].type))
           }
           return { ...e, sets }
         })
         return { ...s, entries }
       })
-      if (nowDone && restSeconds > 0) {
-        const exId = session?.entries[entryIndex]?.exerciseId ?? null
-        startRest(restSeconds, exId)
+
+      if (willBeDone && restSeconds > 0) {
+        startRest(restSeconds, entry?.exerciseId ?? null)
       }
     },
     [mutate, session, startRest],

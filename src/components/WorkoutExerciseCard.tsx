@@ -158,6 +158,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
               <input
                 type="number"
                 inputMode="decimal"
+                aria-label={`${exercise?.name ?? 'Exercise'} set ${setLabels[setIndex]} weight`}
                 value={toDisplay(set.weightKg)}
                 placeholder={prevSet ? displayWeight(prevSet.weightKg, units) : '0'}
                 onFocus={(e) => e.target.select()}
@@ -167,6 +168,7 @@ export function WorkoutExerciseCard({ entryIndex, entry, exercise, sessionDateIS
               <input
                 type="number"
                 inputMode="numeric"
+                aria-label={`${exercise?.name ?? 'Exercise'} set ${setLabels[setIndex]} reps`}
                 value={set.reps ?? ''}
                 placeholder={prevSet?.reps != null ? String(prevSet.reps) : '0'}
                 onFocus={(e) => e.target.select()}
