@@ -7,7 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Rack" />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- Icons use %BASE_URL% so they resolve at both "/" and the "/gym-app/" Pages base. -->
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="%BASE_URL%icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
     <title>Rack, workout tracker</title>
   </head>
   <body>
