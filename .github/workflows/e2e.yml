@@ -1,7 +1,7 @@
-name: E2E tests
+name: Tests
 
-# Runs the Playwright end-to-end suite (real browser, full app) on every push
-# and PR, so regressions in the core logging loop get caught automatically.
+# Runs unit tests (Vitest) and the Playwright end-to-end suite (real browser,
+# full app) on every push and PR, so regressions get caught automatically.
 on:
   push:
     branches: ['claude/kind-clarke-exE3K']
@@ -19,6 +19,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Unit tests
+        run: npm test
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: Run E2E tests

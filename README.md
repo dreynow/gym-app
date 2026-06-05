@@ -115,6 +115,31 @@ src/
               Library, Settings, and the routine / session detail views)
 ```
 
+## Apple Health import
+
+Rack can fold in Apple Watch data without any native app or account. On your
+iPhone: Health app, tap your photo, then **Export All Health Data**; unzip the
+result and, in Rack, go Settings, **Import from Apple Health**, and pick
+`export.xml`. It is parsed locally (streamed, never DOM-loaded, so even a
+multi-hundred-MB export is fine) and merged non-destructively:
+
+- Per workout, the average and max heart rate and active calories attach to the
+  Rack session they overlap in time, shown on the session detail.
+- Bodyweight records flow into the Body log, one per day, skipping dates you
+  already have.
+
+A future upgrade path (live HealthKit sync via a Capacitor wrapper) can reuse
+the same data fields.
+
+## Testing
+
+- **Unit** (`npm test`): Vitest over the pure logic, no browser, no DB. Covers
+  Epley 1RM, set/volume maths, the plate calculator, PR detection, and the
+  Apple Health parser/matcher.
+- **End to end** (`npm run test:e2e`): Playwright drives the real app in a
+  headless browser across every screen, the full logging loop, charts, settings,
+  and the Apple Health import. Both suites also run in CI on every push.
+
 ## Roadmap hooks (phase 2)
 
 The data model already supports these without a rewrite: double-progression

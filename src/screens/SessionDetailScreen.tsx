@@ -17,7 +17,7 @@ import { PR_LABEL } from '../lib/pr'
 import { SET_TYPE_LABEL } from '../lib/labels'
 import { Header } from '../components/Header'
 import { Card, cx, IconButton, Pill, Spinner } from '../components/ui'
-import { IconTrash, IconTrophy } from '../components/Icons'
+import { IconFlame, IconHeart, IconTrash, IconTrophy } from '../components/Icons'
 
 export function SessionDetailScreen({ id }: { id: string }) {
   const settings = useSettings()
@@ -79,6 +79,39 @@ export function SessionDetailScreen({ id }: { id: string }) {
             value={displayWeight(totalVolume, units)}
           />
         </div>
+
+        {(session.heartRateAvgBpm != null || session.activeEnergyKcal != null) && (
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="t-label">Apple Watch</span>
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              {session.heartRateAvgBpm != null && (
+                <span className="inline-flex items-center gap-1.5">
+                  <IconHeart size={16} className="text-danger" />
+                  <span className="font-mono tabular-nums font-semibold">
+                    {session.heartRateAvgBpm}
+                  </span>
+                  <span className="text-fg-3">avg bpm</span>
+                  {session.heartRateMaxBpm != null && (
+                    <span className="text-fg-3">
+                      · <span className="font-mono tabular-nums text-fg-2">{session.heartRateMaxBpm}</span> max
+                    </span>
+                  )}
+                </span>
+              )}
+              {session.activeEnergyKcal != null && (
+                <span className="inline-flex items-center gap-1.5">
+                  <IconFlame size={16} className="text-warning" />
+                  <span className="font-mono tabular-nums font-semibold">
+                    {session.activeEnergyKcal}
+                  </span>
+                  <span className="text-fg-3">kcal</span>
+                </span>
+              )}
+            </div>
+          </Card>
+        )}
 
         {(prs?.length ?? 0) > 0 && (
           <Card className="p-4">

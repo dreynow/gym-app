@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { updateSettings } from '../db/repo'
+import { importAppleHealth, updateSettings, type HealthImportResult } from '../db/repo'
 import type { Units } from '../db/types'
 import { useSettings } from '../hooks/useSettings'
 import {
@@ -19,7 +19,7 @@ import {
   Stepper,
   TextInput,
 } from '../components/ui'
-import { IconDownload, IconPlus, IconUpload, IconX } from '../components/Icons'
+import { IconDownload, IconHeart, IconPlus, IconUpload, IconX } from '../components/Icons'
 
 export function SettingsScreen() {
   const settings = useSettings()
@@ -28,6 +28,10 @@ export function SettingsScreen() {
   const [result, setResult] = useState<ImportResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [newPlate, setNewPlate] = useState('')
+  const healthFileRef = useRef<HTMLInputElement>(null)
+  const [healthBusy, setHealthBusy] = useState(false)
+  const [healthResult, setHealthResult] = useState<HealthImportResult | null>(null)
+  const [healthError, setHealthError] = useState<string | null>(null)
 
   function addPlate() {
     const v = Number(newPlate)
@@ -70,6 +74,31 @@ export function SettingsScreen() {
     } finally {
       setPendingImport(null)
     }
+  }
+
+  function onHealthFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setHealthError(null)
+    setHealthResult(null)
+    setHealthBusy(true)
+    const reader = new FileReader()
+    reader.onload = async () => {
+      try {
+        const res = await importAppleHealth(String(reader.result))
+        setHealthResult(res)
+      } catch {
+        setHealthError('Could not read that file. Pick the export.xml from your Apple Health export.')
+      } finally {
+        setHealthBusy(false)
+      }
+    }
+    reader.onerror = () => {
+      setHealthError('Could not read that file.')
+      setHealthBusy(false)
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   return (
@@ -171,6 +200,48 @@ export function SettingsScreen() {
             onChange={onFileChosen}
           />
           {error && <p className="text-sm text-danger">{error}</p>}
+        </Section>
+
+        <Section title="Apple Health">
+          <p className="text-xs text-fg-3 -mt-1">
+            On your iPhone: Health app, tap your photo, then Export All Health
+            Data. Unzip the file and import export.xml here. Heart rate and active
+            calories attach to the workouts they overlap, and bodyweight entries
+            are added to your Body log.
+          </p>
+          <Button
+            variant="secondary"
+            full
+            disabled={healthBusy}
+            onClick={() => healthFileRef.current?.click()}
+          >
+            <IconHeart size={18} /> {healthBusy ? 'Importing…' : 'Import from Apple Health (export.xml)'}
+          </Button>
+          <input
+            ref={healthFileRef}
+            type="file"
+            accept=".xml,text/xml,application/xml"
+            className="hidden"
+            onChange={onHealthFileChosen}
+          />
+          {healthError && <p className="text-sm text-danger">{healthError}</p>}
+          {healthResult && (
+            <div className="text-sm text-fg-2 bg-surface-2 rounded-md p-3">
+              <p className="text-fg-1 font-medium mb-1">Apple Health imported</p>
+              <ul className="list-disc pl-5 space-y-0.5">
+                <li>
+                  {healthResult.workoutsMatched} of {healthResult.workoutsTotal} workouts matched
+                  to your sessions
+                  {healthResult.workoutsUnmatched > 0 &&
+                    ` (${healthResult.workoutsUnmatched} had no matching session)`}
+                </li>
+                <li>
+                  {healthResult.bodyAdded} bodyweight entries added
+                  {healthResult.bodySkipped > 0 && `, ${healthResult.bodySkipped} already on file`}
+                </li>
+              </ul>
+            </div>
+          )}
         </Section>
 
         <Section title="About">

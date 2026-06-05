@@ -4,12 +4,15 @@
  * underlying glyphs come from `lucide-react`, so call sites don't change.
  */
 import {
+  Activity,
   Calculator,
   Check,
   ChevronLeft,
   ChevronRight,
   Download,
   Dumbbell,
+  Flame,
+  Heart,
   History,
   LineChart,
   List,
@@ -53,3 +56,6 @@ export const IconDownload = Download
 export const IconUpload = Upload
 export const IconNote = StickyNote
 export const IconMore = MoreHorizontal
+export const IconHeart = Heart
+export const IconFlame = Flame
+export const IconActivity = Activity

@@ -10,6 +10,8 @@ import type {
   Settings,
 } from './types'
 import { uid } from '../lib/id'
+import { matchWorkoutsToSessions, parseAppleHealthExport } from '../lib/appleHealth'
+import { toDateInputValue } from '../lib/format'
 
 const SEEDED_FLAG = 'ironlog.seeded.v1'
 
@@ -188,4 +190,53 @@ export async function saveBodyMetric(metric: BodyMetric): Promise<void> {
 
 export async function deleteBodyMetric(id: string): Promise<void> {
   await db.bodyMetrics.delete(id)
+}
+
+// ---------- Apple Health import ----------
+
+export interface HealthImportResult {
+  workoutsTotal: number
+  workoutsMatched: number
+  workoutsUnmatched: number
+  bodyAdded: number
+  bodySkipped: number
+}
+
+/**
+ * Parse an Apple Health `export.xml` and merge it in: attach per-workout heart
+ * rate + active energy onto the sessions they overlap, and add any bodyweight
+ * records to the Body log (skipping dates already recorded). Non-destructive.
+ */
+export async function importAppleHealth(xml: string): Promise<HealthImportResult> {
+  const data = parseAppleHealthExport(xml)
+
+  const sessions = (await db.sessions.toArray()).filter((s) => s.finished)
+  const { patches, matched, unmatched } = matchWorkoutsToSessions(data.workouts, sessions)
+  for (const [id, patch] of patches) {
+    await db.sessions.update(id, patch as Partial<Session>)
+  }
+
+  // One bodyweight entry per day; skip days that already have a record.
+  const existingDays = new Set((await db.bodyMetrics.toArray()).map((b) => toDateInputValue(b.dateISO)))
+  const byDay = new Map<string, { dateISO: string; weightKg: number }>()
+  for (const b of data.bodyMass) byDay.set(toDateInputValue(b.dateISO), b)
+
+  let bodyAdded = 0
+  let bodySkipped = 0
+  for (const [day, b] of byDay) {
+    if (existingDays.has(day)) {
+      bodySkipped++
+      continue
+    }
+    await saveBodyMetric(newBodyMetric({ dateISO: b.dateISO, weightKg: b.weightKg }))
+    bodyAdded++
+  }
+
+  return {
+    workoutsTotal: data.workouts.length,
+    workoutsMatched: matched,
+    workoutsUnmatched: unmatched,
+    bodyAdded,
+    bodySkipped,
+  }
 }

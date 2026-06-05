@@ -91,6 +91,17 @@ export interface Session {
   /** False while a workout is in progress, true once finished and saved. */
   finished: boolean
   startedAt: string
+
+  /**
+   * Optional wearable/health data merged in from an external source (e.g. an
+   * Apple Health export). Null/undefined when not available. Kept on the
+   * session so a future cloud sync ships them as-is.
+   */
+  heartRateAvgBpm?: number | null
+  heartRateMaxBpm?: number | null
+  activeEnergyKcal?: number | null
+  /** Provenance of the merged health data, e.g. "apple-health". */
+  healthSource?: string
 }
 
 export interface BodyMetric {
