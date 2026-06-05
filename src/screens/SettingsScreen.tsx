@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   importAppleHealthFile,
   removeImportedAppleHealthSessions,
@@ -14,6 +14,12 @@ import {
   type ImportResult,
 } from '../lib/backup'
 import { num } from '../lib/format'
+import {
+  isIOS,
+  isStandalone,
+  isStoragePersisted,
+  requestPersistentStorage,
+} from '../lib/storage'
 import { Header } from '../components/Header'
 import {
   Button,
@@ -49,6 +55,11 @@ export function SettingsScreen() {
   const [backfillWorkouts, setBackfillWorkouts] = useState(true)
   const [removedMsg, setRemovedMsg] = useState<string | null>(null)
   const [healthProgress, setHealthProgress] = useState<number | null>(null)
+  const [persisted, setPersisted] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    void isStoragePersisted().then(setPersisted)
+  }, [])
 
   function addPlate() {
     const v = Number(newPlate)
@@ -213,6 +224,42 @@ export function SettingsScreen() {
             Everything is stored only on this device. Export a backup regularly,
             and use it to move your history to another device.
           </p>
+
+          <div className="bg-surface-2 rounded-md p-3 text-sm">
+            <div className="flex items-center gap-2">
+              <span
+                className={cx(
+                  'size-2 rounded-full',
+                  persisted ? 'bg-volt' : 'bg-warning',
+                )}
+              />
+              <span className="text-fg-1 font-medium">
+                {persisted == null
+                  ? 'Checking storage…'
+                  : persisted
+                    ? 'On-device storage is persistent'
+                    : 'Storage is not yet persistent'}
+              </span>
+            </div>
+            {persisted === false && (
+              <>
+                <p className="text-xs text-fg-3 mt-1">
+                  Without this, the browser may clear your data under storage
+                  pressure. {isIOS() && !isStandalone()
+                    ? 'On iPhone, add Rack to your Home Screen (Share, then Add to Home Screen) to keep data safe.'
+                    : ''}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void requestPersistentStorage().then(setPersisted)}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-volt-dim active:text-volt"
+                >
+                  <IconCheck size={14} /> Make storage persistent
+                </button>
+              </>
+            )}
+          </div>
+
           <Button variant="secondary" full onClick={() => void downloadBackup()}>
             <IconDownload size={18} /> Export backup (JSON)
           </Button>
