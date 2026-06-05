@@ -10,15 +10,23 @@ import {
   YAxis,
 } from 'recharts'
 import { db } from '../db/db'
+import type { MuscleGroup, Units } from '../db/types'
 import { useExercises } from '../hooks/useExercises'
 import { useSettings } from '../hooks/useSettings'
 import { bestsForEntry } from '../lib/pr'
 import { kgToLb } from '../lib/calc'
-import { num, unitLabel } from '../lib/format'
+import { addWeeks, muscleBreakdown, weekLabel, weekStart } from '../lib/muscleVolume'
+import { MUSCLE_LABEL } from '../lib/labels'
+import { displayWeight, num, unitLabel } from '../lib/format'
 import { Header } from '../components/Header'
 import { Card, EmptyState, SegmentedControl } from '../components/ui'
 import { ExercisePicker } from '../components/ExercisePicker'
-import { IconChart, IconChevronRight } from '../components/Icons'
+import {
+  IconActivity,
+  IconChart,
+  IconChevronLeft,
+  IconChevronRight,
+} from '../components/Icons'
 
 type Metric = 'e1rm' | 'weight' | 'volume'
 type Range = '1m' | '3m' | '6m' | '1y' | 'all'
@@ -40,6 +48,7 @@ const METRIC_LABEL: Record<Metric, string> = {
 export function ProgressScreen() {
   const settings = useSettings()
   const exercises = useExercises()
+  const [view, setView] = useState<'exercise' | 'muscle'>('exercise')
   const [exerciseId, setExerciseId] = useState<string | null>(null)
   const [metric, setMetric] = useState<Metric>('e1rm')
   const [range, setRange] = useState<Range>('3m')
@@ -101,6 +110,20 @@ export function ProgressScreen() {
     <>
       <Header title="Progress" subtitle="Track your lifts over time" />
       <div className="p-4 space-y-4">
+        <SegmentedControl<'exercise' | 'muscle'>
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'exercise', label: 'Exercise' },
+            { value: 'muscle', label: 'Muscle groups' },
+          ]}
+          className="w-full"
+        />
+
+        {view === 'muscle' ? (
+          <MuscleGroupsView units={settings.units} />
+        ) : (
+          <>
         <button
           onClick={() => setPickerOpen(true)}
           className="w-full flex items-center justify-between bg-surface-1 border border-line-2 rounded-2xl px-4 py-3.5 active:bg-surface-2"
@@ -212,6 +235,8 @@ export function ProgressScreen() {
             />
           </>
         )}
+          </>
+        )}
       </div>
 
       <ExercisePicker
@@ -249,5 +274,101 @@ function Stat({
       </div>
       <div className="text-[11px] text-fg-3">{label}</div>
     </div>
+  )
+}
+
+/** Weekly working-set volume per muscle group, with a week stepper. */
+function MuscleGroupsView({ units }: { units: Units }) {
+  const exercises = useExercises()
+  const [weekOffset, setWeekOffset] = useState(0)
+  const [metric, setMetric] = useState<'sets' | 'volume'>('sets')
+
+  const muscleMap = useMemo(() => {
+    const m = new Map<string, MuscleGroup>()
+    for (const e of exercises) m.set(e.id, e.muscleGroup)
+    return m
+  }, [exercises])
+
+  const ws = useMemo(() => addWeeks(weekStart(new Date()), weekOffset), [weekOffset])
+  const wsMs = ws.getTime()
+  const weekEndMs = useMemo(() => addWeeks(ws, 1).getTime(), [ws])
+
+  const rows = useLiveQuery(
+    async () => muscleBreakdown(await db.sessions.toArray(), muscleMap, wsMs, weekEndMs),
+    [muscleMap, wsMs, weekEndMs],
+  )
+
+  const totalSets = (rows ?? []).reduce((n, r) => n + r.sets, 0)
+  const maxVal = Math.max(
+    1,
+    ...(rows ?? []).map((r) => (metric === 'sets' ? r.sets : r.volumeKg)),
+  )
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setWeekOffset((w) => w - 1)}
+          aria-label="Previous week"
+          className="size-9 rounded-full bg-surface-1 border border-line-2 flex items-center justify-center active:bg-surface-2"
+        >
+          <IconChevronLeft size={18} />
+        </button>
+        <div className="text-center">
+          <div className="font-semibold">
+            {weekOffset === 0 ? 'This week' : `Week of ${weekLabel(ws)}`}
+          </div>
+          <div className="text-xs text-fg-3 tabular-nums">{totalSets} hard sets</div>
+        </div>
+        <button
+          onClick={() => setWeekOffset((w) => Math.min(0, w + 1))}
+          disabled={weekOffset >= 0}
+          aria-label="Next week"
+          className="size-9 rounded-full bg-surface-1 border border-line-2 flex items-center justify-center active:bg-surface-2 disabled:opacity-30"
+        >
+          <IconChevronRight size={18} />
+        </button>
+      </div>
+
+      <SegmentedControl<'sets' | 'volume'>
+        value={metric}
+        onChange={setMetric}
+        options={[
+          { value: 'sets', label: 'Sets' },
+          { value: 'volume', label: 'Tonnage' },
+        ]}
+        className="w-full"
+      />
+
+      {rows === undefined ? null : rows.length === 0 ? (
+        <EmptyState
+          icon={<IconActivity size={40} />}
+          title="No working sets this week"
+          subtitle="Log some workouts to see volume per muscle group."
+        />
+      ) : (
+        <Card className="p-4 space-y-3">
+          {rows.map((r) => {
+            const value = metric === 'sets' ? r.sets : r.volumeKg
+            const pct = Math.round((value / maxVal) * 100)
+            return (
+              <div key={r.muscle}>
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-sm">{MUSCLE_LABEL[r.muscle]}</span>
+                  <span className="font-mono tabular-nums text-sm font-semibold">
+                    {metric === 'sets'
+                      ? `${r.sets} ${r.sets === 1 ? 'set' : 'sets'}`
+                      : `${displayWeight(r.volumeKg, units)} ${unitLabel(units)}`}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
+                  <div className="h-full rounded-full bg-volt" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            )
+          })}
+        </Card>
+      )}
+    </>
   )
 }

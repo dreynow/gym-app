@@ -41,7 +41,9 @@ test.describe('Progress charts', () => {
     // Explicitly select Leg Press rather than relying on the "first exercise
     // with history" auto-default, which depends on a live query resolving and
     // can race under load.
-    await page.getByRole('button', { name: /Exercise/ }).first().click()
+    // Open the exercise selector (named "Exercise <current>"), not the new
+    // "Exercise"/"Muscle groups" view toggle.
+    await page.getByRole('button', { name: /^Exercise .+/ }).click()
     await page.getByPlaceholder('Search exercises').fill('Leg Press')
     // Anchor to the start so this matches the picker result ("Leg Press Quads ·
     // Machine") and not the background selector button ("Exercise Leg Press").
@@ -63,5 +65,20 @@ test.describe('Progress charts', () => {
     // re-measures, which flakes a visibility check without meaning the chart
     // failed to render.
     await expect(page.locator('.recharts-surface').first()).toBeAttached()
+  })
+
+  test('muscle groups view shows weekly working sets per muscle', async ({ page }) => {
+    await gotoHome(page)
+    await startEmptyWithExercise(page, 'Leg Press')
+    await logSet(page, 'Leg Press', 1, 200, 10)
+    await page.getByRole('button', { name: 'Finish', exact: true }).click()
+    await expect(page).toHaveURL(/#\/session\//)
+
+    await navTo(page, 'Progress')
+    await page.getByRole('button', { name: 'Muscle groups' }).click()
+    await expect(page.getByText('This week')).toBeVisible()
+    // Leg Press is a quads exercise; the one logged working set shows up.
+    await expect(page.getByText('Quads')).toBeVisible()
+    await expect(page.getByText('1 set', { exact: true })).toBeVisible()
   })
 })
