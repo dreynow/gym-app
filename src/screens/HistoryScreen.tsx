@@ -1,13 +1,17 @@
+import { useMemo, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import type { Session } from '../db/types'
 import { db } from '../db/db'
 import { useExerciseMap } from '../hooks/useExercises'
 import { useSettings } from '../hooks/useSettings'
 import { navigate } from '../lib/router'
 import { countWorkingSets, sessionVolume } from '../lib/calc'
 import { displayWeight, formatDurationShort, relativeDate, unitLabel } from '../lib/format'
+import { computeTrainingStats, dayKey, monthGrid } from '../lib/streaks'
 import { Header } from '../components/Header'
-import { Card, EmptyState, Pill, Spinner } from '../components/ui'
+import { Card, cx, EmptyState, Pill, SegmentedControl, Spinner } from '../components/ui'
 import {
+  IconChevronLeft,
   IconChevronRight,
   IconFlame,
   IconHeart,
@@ -18,6 +22,7 @@ import {
 export function HistoryScreen() {
   const settings = useSettings()
   const exMap = useExerciseMap()
+  const [view, setView] = useState<'list' | 'calendar'>('list')
   const sessions = useLiveQuery(async () => {
     const all = await db.sessions.toArray()
     return all.filter((s) => s.finished).sort((a, b) => b.dateISO.localeCompare(a.dateISO))
@@ -32,7 +37,17 @@ export function HistoryScreen() {
   return (
     <>
       <Header title="History" subtitle="Your past sessions" />
-      <div className="p-4">
+      <div className="p-4 space-y-4">
+        <SegmentedControl<'list' | 'calendar'>
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'list', label: 'List' },
+            { value: 'calendar', label: 'Calendar' },
+          ]}
+          className="w-full"
+        />
+
         {sessions === undefined ? (
           <Spinner />
         ) : sessions.length === 0 ? (
@@ -41,6 +56,8 @@ export function HistoryScreen() {
             title="No workouts logged yet"
             subtitle="Finished workouts show up here with volume and PRs."
           />
+        ) : view === 'calendar' ? (
+          <CalendarView sessions={sessions} />
         ) : (
           <div className="space-y-3">
             {sessions.map((s) => {
@@ -108,5 +125,127 @@ export function HistoryScreen() {
         )}
       </div>
     </>
+  )
+}
+
+const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+
+function CalendarView({ sessions }: { sessions: Session[] }) {
+  const now = new Date()
+  const [month, setMonth] = useState(() => new Date(now.getFullYear(), now.getMonth(), 1))
+
+  const stats = useMemo(
+    () => computeTrainingStats(sessions.map((s) => new Date(s.dateISO)), now),
+    // now is recreated each render but only its day matters; sessions drives it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessions],
+  )
+  const sessionByDay = useMemo(() => {
+    const m = new Map<string, string>()
+    // sessions are newest-first; keep the latest of a day for tap-through.
+    for (const s of sessions) m.set(dayKey(new Date(s.dateISO)), s.id)
+    return m
+  }, [sessions])
+
+  const grid = monthGrid(month.getFullYear(), month.getMonth())
+  const todayKey = dayKey(now)
+  const atCurrentMonth =
+    month.getFullYear() === now.getFullYear() && month.getMonth() === now.getMonth()
+  const monthLabel = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2">
+        <StatTile
+          label="Week streak"
+          value={String(stats.weekStreak)}
+          icon={<IconFlame size={14} className="text-volt" />}
+        />
+        <StatTile label="This week" value={String(stats.thisWeek)} />
+        <StatTile label="This month" value={String(stats.thisMonth)} />
+      </div>
+
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <button
+            aria-label="Previous month"
+            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+            className="size-8 rounded-full flex items-center justify-center text-fg-2 active:bg-surface-2"
+          >
+            <IconChevronLeft size={18} />
+          </button>
+          <span className="font-semibold">{monthLabel}</span>
+          <button
+            aria-label="Next month"
+            disabled={atCurrentMonth}
+            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+            className="size-8 rounded-full flex items-center justify-center text-fg-2 active:bg-surface-2 disabled:opacity-30"
+          >
+            <IconChevronRight size={18} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {WEEKDAYS.map((w) => (
+            <div key={w} className="text-center text-2xs text-fg-3">
+              {w}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {grid.map((day) => {
+            const k = dayKey(day)
+            const trained = stats.trainedDays.has(k)
+            const inMonth = day.getMonth() === month.getMonth()
+            const isToday = k === todayKey
+            const sid = sessionByDay.get(k)
+            return (
+              <button
+                key={k}
+                disabled={!sid}
+                onClick={() => sid && navigate({ name: 'session', id: sid })}
+                className={cx(
+                  'aspect-square rounded-md flex items-center justify-center text-sm font-mono tabular-nums',
+                  trained
+                    ? 'bg-volt text-on-volt font-semibold'
+                    : inMonth
+                      ? 'text-fg-2'
+                      : 'text-fg-3/40',
+                  isToday && !trained && 'ring-1 ring-line-3',
+                )}
+              >
+                {day.getDate()}
+              </button>
+            )
+          })}
+        </div>
+      </Card>
+
+      {stats.longestWeekStreak > 1 && (
+        <p className="text-xs text-fg-3 text-center">
+          Longest run: {stats.longestWeekStreak} weeks in a row.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function StatTile({
+  label,
+  value,
+  icon,
+}: {
+  label: string
+  value: string
+  icon?: ReactNode
+}) {
+  return (
+    <div className="bg-surface-1 border border-line-2 rounded-xl p-3 text-center">
+      <div className="flex items-center justify-center gap-1 text-lg font-bold tabular-nums">
+        {icon}
+        {value}
+      </div>
+      <div className="text-[11px] text-fg-3">{label}</div>
+    </div>
   )
 }
