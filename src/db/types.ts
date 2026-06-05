@@ -134,6 +134,12 @@ export interface Settings {
   anthropicApiKey?: string
   /** Claude model id the coach uses. */
   coachModel?: string
+  /** Cloud backup endpoint (the user's own server). */
+  syncEndpoint?: string
+  /** Passphrase used to encrypt cloud backups (stored on-device only). */
+  syncPassphrase?: string
+  /** ISO timestamp of the last successful cloud backup. */
+  lastCloudBackupAt?: string
 }
 
 /** One turn in the AI coach conversation, persisted so it survives refreshes. */

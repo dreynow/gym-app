@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Rack encrypted cloud backup (Lambda Function URL + private S3 bucket)
+
+Resources:
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  BackupFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs20.x
+      Handler: handler.handler
+      CodeUri: ./
+      MemorySize: 256
+      Timeout: 15
+      Environment:
+        Variables:
+          BUCKET: !Ref BackupBucket
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref BackupBucket
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins: ['*']
+          AllowMethods: ['POST']
+          AllowHeaders: ['content-type']
+
+Outputs:
+  BackupUrl:
+    Description: Paste this into Rack, Settings, Cloud backup endpoint URL.
+    Value: !GetAtt BackupFnUrl.FunctionUrl

@@ -17,6 +17,7 @@ import { num } from '../lib/format'
 import { navigate } from '../lib/router'
 import { useConfirm } from '../components/ConfirmDialog'
 import { COACH_MODELS, DEFAULT_COACH_MODEL } from '../lib/coach'
+import { pushCloudBackup, restoreCloudBackup } from '../lib/cloudBackup'
 import {
   isIOS,
   isStandalone,
@@ -64,6 +65,11 @@ export function SettingsScreen() {
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [keyInput, setKeyInput] = useState('')
   const [keySaved, setKeySaved] = useState(false)
+  const [cloudEndpoint, setCloudEndpoint] = useState('')
+  const [cloudPass, setCloudPass] = useState('')
+  const [cloudBusy, setCloudBusy] = useState<'idle' | 'backup' | 'restore'>('idle')
+  const [cloudMsg, setCloudMsg] = useState<string | null>(null)
+  const [cloudErr, setCloudErr] = useState<string | null>(null)
 
   useEffect(() => {
     void isStoragePersisted().then(setPersisted)
@@ -72,6 +78,68 @@ export function SettingsScreen() {
   useEffect(() => {
     setKeyInput(settings.anthropicApiKey ?? '')
   }, [settings.anthropicApiKey])
+
+  useEffect(() => {
+    setCloudEndpoint(settings.syncEndpoint ?? '')
+    setCloudPass(settings.syncPassphrase ?? '')
+  }, [settings.syncEndpoint, settings.syncPassphrase])
+
+  async function backupNow() {
+    const endpoint = cloudEndpoint.trim()
+    const passphrase = cloudPass
+    if (!endpoint || !passphrase) {
+      setCloudErr('Enter the endpoint URL and a passphrase first.')
+      return
+    }
+    setCloudErr(null)
+    setCloudMsg(null)
+    setCloudBusy('backup')
+    try {
+      await updateSettings({ syncEndpoint: endpoint, syncPassphrase: passphrase })
+      await pushCloudBackup({ endpoint, passphrase })
+      await updateSettings({ lastCloudBackupAt: new Date().toISOString() })
+      setCloudMsg('Backed up to the cloud.')
+    } catch (e) {
+      setCloudErr(e instanceof Error ? e.message : 'Backup failed.')
+    } finally {
+      setCloudBusy('idle')
+    }
+  }
+
+  async function restoreNow() {
+    const endpoint = cloudEndpoint.trim()
+    const passphrase = cloudPass
+    if (!endpoint || !passphrase) {
+      setCloudErr('Enter the endpoint URL and your passphrase first.')
+      return
+    }
+    if (
+      !(await confirm({
+        title: 'Restore from cloud',
+        message:
+          'This replaces ALL data on this device with your cloud backup. Continue?',
+        confirmLabel: 'Restore',
+        danger: true,
+      }))
+    )
+      return
+    setCloudErr(null)
+    setCloudMsg(null)
+    setCloudBusy('restore')
+    try {
+      await updateSettings({ syncEndpoint: endpoint, syncPassphrase: passphrase })
+      const res = await restoreCloudBackup({ endpoint, passphrase })
+      if (!res) setCloudMsg('No backup found for that passphrase yet.')
+      else
+        setCloudMsg(
+          `Restored backup from ${res.exportedAt ? new Date(res.exportedAt).toLocaleString() : 'the cloud'}.`,
+        )
+    } catch (e) {
+      setCloudErr(e instanceof Error ? e.message : 'Restore failed.')
+    } finally {
+      setCloudBusy('idle')
+    }
+  }
 
   function addPlate() {
     const v = Number(newPlate)
@@ -295,6 +363,58 @@ export function SettingsScreen() {
             onChange={onFileChosen}
           />
           {error && <p className="text-sm text-danger">{error}</p>}
+        </Section>
+
+        <Section title="Cloud backup">
+          <p className="text-xs text-fg-3 -mt-1">
+            Back up to your own server. Your data is encrypted on this device
+            with your passphrase before it leaves, so the server only stores
+            unreadable ciphertext. Keep the passphrase safe: without it, the
+            backup cannot be restored. Backs up automatically about once a day.
+          </p>
+          <Field label="Backup endpoint URL">
+            <TextInput
+              type="url"
+              autoComplete="off"
+              value={cloudEndpoint}
+              placeholder="https://...lambda-url.aws/"
+              onChange={(e) => setCloudEndpoint(e.target.value)}
+            />
+          </Field>
+          <Field label="Passphrase">
+            <TextInput
+              type="password"
+              autoComplete="off"
+              value={cloudPass}
+              placeholder="A phrase only you know"
+              onChange={(e) => setCloudPass(e.target.value)}
+            />
+          </Field>
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              full
+              disabled={cloudBusy !== 'idle'}
+              onClick={() => void backupNow()}
+            >
+              <IconUpload size={18} /> {cloudBusy === 'backup' ? 'Backing up…' : 'Back up now'}
+            </Button>
+            <Button
+              variant="secondary"
+              full
+              disabled={cloudBusy !== 'idle'}
+              onClick={() => void restoreNow()}
+            >
+              <IconDownload size={18} /> {cloudBusy === 'restore' ? 'Restoring…' : 'Restore'}
+            </Button>
+          </div>
+          {settings.lastCloudBackupAt && (
+            <p className="text-xs text-fg-3">
+              Last backed up {new Date(settings.lastCloudBackupAt).toLocaleString()}.
+            </p>
+          )}
+          {cloudMsg && <p className="text-sm text-volt-dim">{cloudMsg}</p>}
+          {cloudErr && <p className="text-sm text-danger">{cloudErr}</p>}
         </Section>
 
         <Section title="Apple Health">

@@ -1,14 +1,16 @@
 import { db, DEFAULT_SETTINGS, SETTINGS_ID } from '../db/db'
 import type {
   BodyMetric,
+  CoachMessage,
   Exercise,
+  Meal,
   PrRecord,
   Routine,
   Session,
   Settings,
 } from '../db/types'
 
-const BACKUP_VERSION = 1
+const BACKUP_VERSION = 2
 const BACKUP_KIND = 'ironlog-backup'
 
 export interface BackupFile {
@@ -22,23 +24,28 @@ export interface BackupFile {
     bodyMetrics: BodyMetric[]
     settings: Settings[]
     prs: PrRecord[]
+    meals?: Meal[]
+    coachMessages?: CoachMessage[]
   }
 }
 
 export async function buildBackup(): Promise<BackupFile> {
-  const [exercises, routines, sessions, bodyMetrics, settings, prs] = await Promise.all([
-    db.exercises.toArray(),
-    db.routines.toArray(),
-    db.sessions.toArray(),
-    db.bodyMetrics.toArray(),
-    db.settings.toArray(),
-    db.prs.toArray(),
-  ])
+  const [exercises, routines, sessions, bodyMetrics, settings, prs, meals, coachMessages] =
+    await Promise.all([
+      db.exercises.toArray(),
+      db.routines.toArray(),
+      db.sessions.toArray(),
+      db.bodyMetrics.toArray(),
+      db.settings.toArray(),
+      db.prs.toArray(),
+      db.meals.toArray(),
+      db.coachMessages.toArray(),
+    ])
   return {
     kind: BACKUP_KIND,
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    data: { exercises, routines, sessions, bodyMetrics, settings, prs },
+    data: { exercises, routines, sessions, bodyMetrics, settings, prs, meals, coachMessages },
   }
 }
 
@@ -91,7 +98,7 @@ export async function importBackup(json: string, mode: ImportMode): Promise<Impo
 
   await db.transaction(
     'rw',
-    [db.exercises, db.routines, db.sessions, db.bodyMetrics, db.settings, db.prs],
+    [db.exercises, db.routines, db.sessions, db.bodyMetrics, db.settings, db.prs, db.meals, db.coachMessages],
     async () => {
       if (mode === 'replace') {
         await Promise.all([
@@ -100,6 +107,8 @@ export async function importBackup(json: string, mode: ImportMode): Promise<Impo
           db.sessions.clear(),
           db.bodyMetrics.clear(),
           db.prs.clear(),
+          db.meals.clear(),
+          db.coachMessages.clear(),
         ])
       }
       await db.exercises.bulkPut(data.exercises ?? [])
@@ -107,6 +116,8 @@ export async function importBackup(json: string, mode: ImportMode): Promise<Impo
       await db.sessions.bulkPut(data.sessions ?? [])
       await db.bodyMetrics.bulkPut(data.bodyMetrics ?? [])
       await db.prs.bulkPut(data.prs ?? [])
+      await db.meals.bulkPut(data.meals ?? [])
+      await db.coachMessages.bulkPut(data.coachMessages ?? [])
       // Settings is a singleton: always take the imported one if present.
       const importedSettings = (data.settings ?? [])[0]
       if (importedSettings) {
