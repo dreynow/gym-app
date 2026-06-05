@@ -5,6 +5,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Base path is '/' for local/Docker, overridden to the repo sub-path
+  // (e.g. '/gym-app/') when building for GitHub Pages via BASE_PATH.
+  base: process.env.BASE_PATH || '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -19,13 +22,14 @@ export default defineConfig({
         background_color: '#0B0B0D',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        // start_url / scope are left to the plugin so they follow Vite `base`
+        // (works at both '/' locally and '/gym-app/' on GitHub Pages). Icon
+        // paths are relative for the same reason.
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: '/icons/icon-512-maskable.png',
+            src: 'icons/icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
