@@ -1,10 +1,10 @@
 name: Tests
 
 # Runs unit tests (Vitest) and the Playwright end-to-end suite (real browser,
-# full app) on every push and PR, so regressions get caught automatically.
+# full app) on pull requests, so regressions get caught before merge. On pushes
+# to the deploy branch the same suite runs inside the "Test and deploy"
+# workflow and gates the deploy, so there is no need to duplicate it here.
 on:
-  push:
-    branches: ['claude/kind-clarke-exE3K']
   pull_request:
   workflow_dispatch:
 

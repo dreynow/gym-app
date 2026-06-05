@@ -1,8 +1,9 @@
-name: Deploy to GitHub Pages
+name: Test and deploy
 
-# Builds the PWA on GitHub's runners and publishes it to GitHub Pages.
-# No local toolchain needed: pushing to the branch (or running this manually
-# via "Run workflow") deploys the site.
+# Runs the full test suite, then (only if it passes) builds the PWA on GitHub's
+# runners and publishes it to GitHub Pages. Tests gate the deploy, so a red
+# build never ships. No local toolchain needed: pushing to the branch (or
+# running this manually via "Run workflow") tests and deploys the site.
 on:
   push:
     branches: ['claude/kind-clarke-exE3K']
@@ -20,7 +21,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
