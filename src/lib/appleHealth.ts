@@ -194,22 +194,37 @@ export function parseAppleHealthExport(xml: string): AppleHealthData {
  * without ever materialising it as one string. Safe for files far larger than
  * V8's max string length.
  */
+export interface ParseStreamOptions {
+  /** Called with cumulative bytes read, throttled, for progress UI. */
+  onProgress?: (bytesRead: number) => void
+}
+
 export async function parseAppleHealthStream(
   stream: ReadableStream<Uint8Array>,
+  opts: ParseStreamOptions = {},
 ): Promise<AppleHealthData> {
   const sink: Sink = { workouts: [], bodyMass: [] }
   const reader = stream.getReader()
   const decoder = new TextDecoder('utf-8')
   let buf = ''
+  let bytesRead = 0
+  let lastReported = 0
   try {
     for (;;) {
       const { done, value } = await reader.read()
       if (done) break
+      bytesRead += value.byteLength
       buf += decoder.decode(value, { stream: true })
       buf = drainBuffer(buf, sink)
+      // Throttle progress to every ~4MB so React isn't flooded.
+      if (opts.onProgress && bytesRead - lastReported >= 4_000_000) {
+        lastReported = bytesRead
+        opts.onProgress(bytesRead)
+      }
     }
     buf += decoder.decode()
     drainBuffer(buf, sink)
+    opts.onProgress?.(bytesRead)
   } finally {
     reader.releaseLock()
   }

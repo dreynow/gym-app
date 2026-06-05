@@ -217,6 +217,8 @@ export interface HealthImportOptions {
    * not overlap an existing one (date/duration/HR/calories, no set entries).
    */
   createSessions?: boolean
+  /** Cumulative bytes read, for progress UI on large exports. */
+  onProgress?: (bytesRead: number) => void
 }
 
 const APPLE_HEALTH_SOURCE = 'apple-health'
@@ -261,7 +263,8 @@ export async function importAppleHealthStream(
   stream: ReadableStream<Uint8Array>,
   opts: HealthImportOptions = {},
 ): Promise<HealthImportResult> {
-  return mergeHealthData(await parseAppleHealthStream(stream), opts)
+  const data = await parseAppleHealthStream(stream, { onProgress: opts.onProgress })
+  return mergeHealthData(data, opts)
 }
 
 /** Remove every session that was backfilled from Apple Health. Returns count. */

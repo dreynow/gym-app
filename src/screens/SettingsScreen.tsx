@@ -48,6 +48,7 @@ export function SettingsScreen() {
   const [healthError, setHealthError] = useState<string | null>(null)
   const [backfillWorkouts, setBackfillWorkouts] = useState(true)
   const [removedMsg, setRemovedMsg] = useState<string | null>(null)
+  const [healthProgress, setHealthProgress] = useState<number | null>(null)
 
   function addPlate() {
     const v = Number(newPlate)
@@ -100,17 +101,21 @@ export function SettingsScreen() {
     setHealthResult(null)
     setRemovedMsg(null)
     setHealthBusy(true)
+    setHealthProgress(0)
     try {
       // Stream the file rather than reading it whole: a real export.xml can be
       // hundreds of MB, well past V8's max string length.
+      const total = file.size || 1
       const res = await importAppleHealthStream(file.stream(), {
         createSessions: backfillWorkouts,
+        onProgress: (bytes) => setHealthProgress(Math.min(99, Math.round((bytes / total) * 100))),
       })
       setHealthResult(res)
     } catch {
       setHealthError('Could not read that file. Pick the export.xml from your Apple Health export.')
     } finally {
       setHealthBusy(false)
+      setHealthProgress(null)
     }
   }
 
@@ -260,7 +265,10 @@ export function SettingsScreen() {
             disabled={healthBusy}
             onClick={() => healthFileRef.current?.click()}
           >
-            <IconHeart size={18} /> {healthBusy ? 'Importing…' : 'Import from Apple Health (export.xml)'}
+            <IconHeart size={18} />{' '}
+            {healthBusy
+              ? `Importing… ${healthProgress ?? 0}%`
+              : 'Import from Apple Health (export.xml)'}
           </Button>
           <input
             ref={healthFileRef}
