@@ -1,0 +1,13 @@
+node_modules
+dist
+dev-dist
+.git
+.gitignore
+*.log
+npm-debug.log*
+.DS_Store
+.vscode
+.idea
+# Reference docs / handoff material not needed in the image build
+design-system
+README.md

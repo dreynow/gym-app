@@ -1,0 +1,16 @@
+# Run the whole app with one command:
+#   docker compose up --build
+# Then open http://localhost:8080
+#
+# The build happens inside the container, so you do NOT need Node, npm, or any
+# of the toolchain installed on your machine. Only Docker Desktop.
+services:
+  rack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rack-workout-tracker
+    container_name: rack
+    ports:
+      - "8080:80"
+    restart: unless-stopped

@@ -57,6 +57,18 @@ re-declare hexes in components, consume the tokens (`bg-surface-1`, `text-fg-2`,
 docs are kept under `design-system/` for provenance, and the Geist `.woff2`
 fonts are served from `public/fonts/`. See `design-system/BUILD.md`.
 
+## Run with Docker (no Node required)
+
+If you don't want to install Node/npm, just use Docker Desktop. The build runs
+inside the container, so nothing but Docker is needed on your machine:
+
+```bash
+docker compose up --build
+```
+
+Then open **http://localhost:8080**. Stop it with Ctrl+C (or `docker compose
+down`). To rebuild after pulling changes, run the same command again.
+
 ## Run it
 
 ```bash
